@@ -52,6 +52,98 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// Reel video component with autoplay on viewport
+function ReelVideo({ videoId, onPlay, style }) {
+  const videoRef = useRef(null);
+  const containerRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [progress, setProgress] = useState(0);
+
+  // Intersection Observer for autoplay
+  useEffect(() => {
+    const video = videoRef.current;
+    const container = containerRef.current;
+    if (!video || !container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+            video.play().catch(() => {});
+            setIsPlaying(true);
+            if (onPlay) onPlay();
+          } else {
+            video.pause();
+            setIsPlaying(false);
+          }
+        });
+      },
+      { threshold: [0.6] }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [onPlay]);
+
+  // Progress tracking
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const updateProgress = () => {
+      if (video.duration) {
+        setProgress((video.currentTime / video.duration) * 100);
+      }
+    };
+    video.addEventListener("timeupdate", updateProgress);
+    return () => video.removeEventListener("timeupdate", updateProgress);
+  }, []);
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const videoUrl = `https://videos.pexels.com/video-files/${videoId}/${videoId}-hd_1080_1920_25fps.mp4`;
+
+  return (
+    <div ref={containerRef} style={{ position: "relative", width: "100%", ...style }} onClick={toggleMute}>
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        loop
+        muted={isMuted}
+        playsInline
+        preload="metadata"
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+      />
+      {/* Progress bar */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: "rgba(255,255,255,0.2)" }}>
+        <div style={{ height: "100%", width: `${progress}%`, background: "#fff", transition: "width 0.1s linear" }} />
+      </div>
+      {/* Mute indicator */}
+      <div style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontSize: 16 }}>{isMuted ? "🔇" : "🔊"}</span>
+      </div>
+      {/* Reel badge */}
+      <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,0.6)", borderRadius: 8, padding: "4px 10px", display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ fontSize: 14 }}>🎬</span>
+        <span style={{ fontSize: 12, fontWeight: 900, color: "#fff" }}>Reel</span>
+      </div>
+      {/* Play indicator when paused */}
+      {!isPlaying && (
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)" }}>
+          <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: 24, marginLeft: 4 }}>▶</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SafeImg({ src, alt, style, loading, getAltSrc, maxRetries = 2 }) {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [tries, setTries] = useState(0);
@@ -153,6 +245,7 @@ export default function ScrollTrap() {
   const [dmReplies, setDmReplies] = useState(0);
   const [profileVisits, setProfileVisits] = useState(0);
   const [storiesWatched, setStoriesWatched] = useState(0);
+  const [reelsWatched, setReelsWatched] = useState(0);
   const [sharedClickbait, setSharedClickbait] = useState(0);
   const [storiesPollClicks, setStoriesPollClicks] = useState(0);
   const [typingShownCount, setTypingShownCount] = useState(0);
@@ -258,6 +351,41 @@ export default function ScrollTrap() {
       "photo-1596854407944-bf87f6fdd49e", "photo-1561037404-61cd46aa615b",
     ],
   }), []);
+
+  // Video database per Reels (Pexels video IDs)
+  const videoDB = useMemo(() => ({
+    music: [
+      { id: "3015510", caption: "vibes 🎧" },
+      { id: "4057411", caption: "festival mode 🔥" },
+      { id: "4488162", caption: "party time 🎉" },
+    ],
+    style: [
+      { id: "4536342", caption: "fit check ✨" },
+      { id: "5538090", caption: "shopping day 🛍️" },
+      { id: "5199826", caption: "new drip 💧" },
+    ],
+    sports: [
+      { id: "4761555", caption: "grind don't stop 💪" },
+      { id: "4065388", caption: "no excuses 🔥" },
+      { id: "5319685", caption: "game day 🏆" },
+    ],
+    lifestyle: [
+      { id: "4812202", caption: "aesthetic ✨" },
+      { id: "4253191", caption: "golden hour 🌅" },
+      { id: "3209211", caption: "mood rn" },
+    ],
+    memes: [
+      { id: "4057393", caption: "pov: monday" },
+      { id: "5752722", caption: "real 💀" },
+      { id: "6010489", caption: "no thoughts just vibes" },
+    ],
+  }), []);
+
+  const reelCaptions = useMemo(() => [
+    "wait for it... 😳", "questo è pazzesco", "chi altro? 👇", "non ci credo 💀",
+    "POV:", "devo dire una cosa...", "unpopular opinion:", "storytime 📖",
+    "greenscreen questa cosa", "rispondimi @", "duetto con me", "🔥🔥🔥",
+  ], []);
 
   const overlaysByCat = useMemo(() => ({
     friends: ["Roma 📍", "Milano 📍", "Sabato sera 🌙", "con la squad 👯", ""],
@@ -499,13 +627,41 @@ export default function ScrollTrap() {
     };
   }, [imageDB, overlaysByCat, teenUsernames]);
 
+  // Build Reel post
+  const buildReel = useCallback(({ id, user, cat }) => {
+    const videoData = pick(videoDB[cat] || videoDB.lifestyle);
+    const avatarId = pick(imageDB.friends);
+    const caption = pick(reelCaptions);
+    
+    return {
+      id,
+      user,
+      avatar: buildUnsplashUrl(avatarId, 180),
+      verified: Math.random() > 0.7,
+      content: caption,
+      isReel: true,
+      videoId: videoData.id,
+      likes: Math.floor(Math.random() * 25000) + 1000,
+      comments: Math.floor(Math.random() * 800) + 50,
+      shares: Math.floor(Math.random() * 500) + 20,
+      time: pick(["adesso", "5 min", "1 ora", "3 ore"]),
+      isAd: false,
+      type: "reel",
+      commentsList: [
+        { user: pick(teenUsernames), text: pick(["🔥🔥🔥", "tutorial?", "share!", "😍😍", "💀💀", "oddio"]), avatar: 11 },
+        { user: pick(teenUsernames), text: pick(["come hai fatto?", "pazzesco", "io morta", "no vabbe"]), avatar: 22 },
+      ],
+    };
+  }, [videoDB, imageDB, reelCaptions, teenUsernames]);
+
   const initialPosts = useMemo(() => [
     buildPost({ id: 1, user: "giu.rossi", cat: "friends", caption: pick(captionsByCat.friends) }),
     buildPost({ id: 2, user: "nico.mp4", cat: "music", caption: pick(captionsByCat.music) }),
-    buildPost({ id: 3, user: "emma_x", cat: "style", caption: pick(captionsByCat.style) }),
+    buildReel({ id: 3, user: "emma_x", cat: "style" }),
     buildPost({ id: 4, user: "fra_04", cat: "memes", caption: pick(captionsByCat.memes) }),
     buildPost({ id: 5, user: "SPONSORED", cat: "style", caption: "🔥 Solo oggi: sconto del 60%! Tocca per vedere", isAd: true }),
-  ], [buildPost, captionsByCat]);
+    buildReel({ id: 6, user: "leo_gamer", cat: "sports" }),
+  ], [buildPost, buildReel, captionsByCat]);
 
   // ==================== EFFECTS ====================
   useEffect(() => {
@@ -696,27 +852,41 @@ export default function ScrollTrap() {
           const weightsSnapshot = { ...userInterests };
           for (let i = 0; i < 4; i += 1) {
             const cat = weightedCategoryPick(weightsSnapshot);
-            const imgId = pick(imageDB[cat]);
-            const caption = pick(captionsByCat[cat]);
-            const overlay = pick(overlaysByCat[cat]);
             const isAd = (currentCount + i) % 7 === 0 && i > 0;
-            const isFomo = !isAd && Math.random() > 0.72;
-            const isClickbait = !isAd && cat === "memes" && Math.random() > 0.75;
+            const isReel = !isAd && Math.random() > 0.7; // ~30% reels
             const postId = currentId;
             currentId = currentId + 1;
-            const newPost = buildPost({
-              id: postId,
-              user: isAd ? "SPONSORED" : pick(teenUsernames),
-              cat,
-              caption: isAd ? "🔥 Offerta limitata: 'Solo per oggi'. Tocca per vedere." : caption,
-              isAd,
-              imageUrl: buildUnsplashUrl(imgId, 900),
-              imageOverlay: isAd ? "SPONSORED" : overlay,
-              postType: isAd ? "ad" : isClickbait ? "clickbait" : isFomo ? "fomo" : "normal",
-              isFake: isClickbait,
-              fomoText: isFomo ? `${Math.floor(Math.random() * 30) + 10} tuoi amici hanno interagito` : null,
-            });
-            batch.push(newPost);
+            
+            if (isReel) {
+              // Generate a Reel
+              const reelCat = ["music", "style", "sports", "lifestyle", "memes"][Math.floor(Math.random() * 5)];
+              const newReel = buildReel({
+                id: postId,
+                user: pick(teenUsernames),
+                cat: reelCat,
+              });
+              batch.push(newReel);
+            } else {
+              // Generate regular post
+              const imgId = pick(imageDB[cat]);
+              const caption = pick(captionsByCat[cat]);
+              const overlay = pick(overlaysByCat[cat]);
+              const isFomo = !isAd && Math.random() > 0.72;
+              const isClickbait = !isAd && cat === "memes" && Math.random() > 0.75;
+              const newPost = buildPost({
+                id: postId,
+                user: isAd ? "SPONSORED" : pick(teenUsernames),
+                cat,
+                caption: isAd ? "🔥 Offerta limitata: 'Solo per oggi'. Tocca per vedere." : caption,
+                isAd,
+                imageUrl: buildUnsplashUrl(imgId, 900),
+                imageOverlay: isAd ? "SPONSORED" : overlay,
+                postType: isAd ? "ad" : isClickbait ? "clickbait" : isFomo ? "fomo" : "normal",
+                isFake: isClickbait,
+                fomoText: isFomo ? `${Math.floor(Math.random() * 30) + 10} tuoi amici hanno interagito` : null,
+              });
+              batch.push(newPost);
+            }
           }
           return prev.concat(batch);
         });
@@ -724,7 +894,7 @@ export default function ScrollTrap() {
       });
       setIsLoadingMore(false);
     }, 900);
-  }, [userInterests, weightedCategoryPick, imageDB, captionsByCat, overlaysByCat, teenUsernames, buildPost]);
+  }, [userInterests, weightedCategoryPick, imageDB, captionsByCat, overlaysByCat, teenUsernames, buildPost, buildReel]);
 
   const handleScroll = useCallback((e) => {
     const el = e.target;
@@ -873,6 +1043,7 @@ export default function ScrollTrap() {
     setDmReplies(0);
     setProfileVisits(0);
     setStoriesWatched(0);
+    setReelsWatched(0);
     setSharedClickbait(0);
     setStoriesPollClicks(0);
     setTypingShownCount(0);
@@ -1035,7 +1206,7 @@ export default function ScrollTrap() {
                       <div style={{ fontSize: 14, fontWeight: 900 }}>{post.user}</div>
                       {post.verified && <div style={{ color: "#3897f0", fontSize: 14 }}>✓</div>}
                     </div>
-                    <div style={{ fontSize: 11, color: "#6b7280" }}>{post.isAd ? "Sponsorizzato" : post.time}</div>
+                    <div style={{ fontSize: 11, color: "#6b7280" }}>{post.isAd ? "Sponsorizzato" : post.isReel ? "Reel • " + post.time : post.time}</div>
                   </div>
                 </div>
                 <div style={{ color: "#fff", opacity: 0.8 }}>•••</div>
@@ -1045,16 +1216,58 @@ export default function ScrollTrap() {
                   <span>🔥</span><span style={{ color: "#feca57", fontSize: 13, fontWeight: 900 }}>{post.fomoText}</span>
                 </div>
               )}
-              <div style={{ width: "100%", aspectRatio: "1 / 1", position: "relative", overflow: "hidden", cursor: "pointer" }} onDoubleClick={() => handleLike(post)}>
-                <SafeImg src={post.image.url} alt="post" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} getAltSrc={altSrcFromCategory(post.image.type, 900)} />
-                <div style={{ position: "absolute", top: "50%", left: "50%", transform: showHeartAnimation === post.id ? "translate(-50%, -50%) scale(1)" : "translate(-50%, -50%) scale(0.7)", opacity: showHeartAnimation === post.id ? 1 : 0, transition: "all 0.25s ease", fontSize: 90, textShadow: "0 0 30px rgba(0,0,0,0.6)", pointerEvents: "none" }}>❤️</div>
-                {post.image.overlay && <div style={{ position: "absolute", bottom: 16, left: 16, background: "rgba(0,0,0,0.65)", padding: "8px 12px", borderRadius: 10, backdropFilter: "blur(8px)" }}><span style={{ fontSize: 13, fontWeight: 900 }}>{post.isAd ? "📢 " : "📍 "}{post.image.overlay}</span></div>}
-              </div>
+              {post.isReel ? (
+                /* REEL VIDEO */
+                <div style={{ width: "100%", aspectRatio: "9 / 16", maxHeight: "70vh", position: "relative", overflow: "hidden", background: "#000" }} onDoubleClick={() => handleLike(post)}>
+                  <ReelVideo 
+                    videoId={post.videoId} 
+                    onPlay={() => {
+                      setUserInterests((prev) => {
+                        const cat = post.type === "reel" ? "music" : post.type;
+                        return { ...prev, [cat]: (prev[cat] || 1) + 2 };
+                      });
+                      setDopamineSpikes((d) => d + 1);
+                      setReelsWatched((r) => r + 1);
+                    }}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: showHeartAnimation === post.id ? "translate(-50%, -50%) scale(1)" : "translate(-50%, -50%) scale(0.7)", opacity: showHeartAnimation === post.id ? 1 : 0, transition: "all 0.25s ease", fontSize: 90, textShadow: "0 0 30px rgba(0,0,0,0.6)", pointerEvents: "none" }}>❤️</div>
+                  {/* Reel sidebar */}
+                  <div style={{ position: "absolute", right: 12, bottom: 80, display: "flex", flexDirection: "column", gap: 20, alignItems: "center" }}>
+                    <div style={{ textAlign: "center" }}>
+                      <button onClick={() => handleLike(post)} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
+                        <span style={{ fontSize: 32, color: likedPosts.includes(post.id) ? "#ed4956" : "#fff" }}>{likedPosts.includes(post.id) ? "❤️" : "🤍"}</span>
+                      </button>
+                      <div style={{ fontSize: 12, color: "#fff", marginTop: 4 }}>{post.likes + (likedPosts.includes(post.id) ? 1 : 0)}</div>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <button onClick={() => handlePostAction(post, "comment")} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}><span style={{ fontSize: 32 }}>💬</span></button>
+                      <div style={{ fontSize: 12, color: "#fff", marginTop: 4 }}>{post.comments}</div>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <button onClick={() => handlePostAction(post, "share")} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}><span style={{ fontSize: 32 }}>📤</span></button>
+                      <div style={{ fontSize: 12, color: "#fff", marginTop: 4 }}>{post.shares || 0}</div>
+                    </div>
+                  </div>
+                  {/* Caption overlay */}
+                  <div style={{ position: "absolute", bottom: 16, left: 12, right: 60, color: "#fff" }}>
+                    <div style={{ fontWeight: 900, marginBottom: 6 }}>@{post.user}</div>
+                    <div style={{ fontSize: 14, lineHeight: 1.4 }}>{post.content}</div>
+                  </div>
+                </div>
+              ) : (
+                /* REGULAR IMAGE POST */
+                <div style={{ width: "100%", aspectRatio: "1 / 1", position: "relative", overflow: "hidden", cursor: "pointer" }} onDoubleClick={() => handleLike(post)}>
+                  <SafeImg src={post.image.url} alt="post" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} getAltSrc={altSrcFromCategory(post.image.type, 900)} />
+                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: showHeartAnimation === post.id ? "translate(-50%, -50%) scale(1)" : "translate(-50%, -50%) scale(0.7)", opacity: showHeartAnimation === post.id ? 1 : 0, transition: "all 0.25s ease", fontSize: 90, textShadow: "0 0 30px rgba(0,0,0,0.6)", pointerEvents: "none" }}>❤️</div>
+                  {post.image.overlay && <div style={{ position: "absolute", bottom: 16, left: 16, background: "rgba(0,0,0,0.65)", padding: "8px 12px", borderRadius: 10, backdropFilter: "blur(8px)" }}><span style={{ fontSize: 13, fontWeight: 900 }}>{post.isAd ? "📢 " : "📍 "}{post.image.overlay}</span></div>}
+                </div>
+              )}
               {post.isAd ? (
                 <div style={{ padding: "12px 16px", background: "#0a0a0a" }}>
                   <button onClick={() => handlePostAction(post, "ad")} style={{ width: "100%", padding: 12, borderRadius: 10, border: "none", background: "#0095f6", color: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15 }}>Scopri di più</button>
                 </div>
-              ) : (
+              ) : !post.isReel ? (
                 <div style={{ padding: "0 16px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "14px 0" }}>
                     <button onClick={() => handleLike(post)} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}><span style={{ fontSize: 26, color: likedPosts.includes(post.id) ? "#ed4956" : "#fff" }}>{likedPosts.includes(post.id) ? "❤️" : "🤍"}</span></button>
@@ -1067,7 +1280,7 @@ export default function ScrollTrap() {
                   <div style={{ fontSize: 14, lineHeight: 1.5, marginBottom: 8 }}><span style={{ fontWeight: 900 }}>{post.user}</span> {post.content}</div>
                   <button onClick={() => handlePostAction(post, "comment")} style={{ background: "transparent", border: "none", color: "#6b7280", cursor: "pointer", padding: 0, marginBottom: 14, fontSize: 14 }}>Vedi tutti i {post.comments} commenti</button>
                 </div>
-              )}
+              ) : null}
             </div>
           ))}
           {isLoadingMore && <div style={{ padding: 16 }}><div style={{ height: 18, width: 160, background: "#151515", borderRadius: 8, marginBottom: 10 }} /><div style={{ width: "100%", aspectRatio: "1 / 1", background: "#0d0d0d", borderRadius: 8 }} /><div style={{ height: 14, width: 220, background: "#151515", borderRadius: 8, marginTop: 12 }} /></div>}
@@ -1506,6 +1719,7 @@ export default function ScrollTrap() {
     const triggers = [
       { icon: "🎯", title: "Feed \"per te\"", stat: `Top: ${topInterest} (${Math.round((userInterests[topInterest] / totalWeight) * 100)}%)`, caption: "Ogni interazione (like, salvataggio, profilo) aggiorna un profilo di interessi; l'algoritmo aumenta la \"dose\" dei contenuti che ti tengono dentro." },
       { icon: "🔔", title: "Notifiche (vere e vuote)", stat: `${notifTotal} notif • ~${notifEmptyApprox} vuote • ${emptyNotificationClicks} click vuoti`, caption: "Le notifiche sono un \"gancio\": ti riportano nell'app. Quelle vuote creano ansia/curiosità e ti spingono a controllare ancora." },
+      { icon: "🎬", title: "Reels / Video brevi", stat: `${reelsWatched} reels visti`, caption: "Video in autoplay con scroll verticale: il formato più \"addictivo\". Partono da soli, si fermano solo quando scorri. Impossibile resistere." },
       { icon: "💬", title: "\"Sta scrivendo…\" (attesa senza ricompensa)", stat: `${typingShownCount} volte mostrato`, caption: "Anticipazione senza messaggio: aumenta l'attenzione e crea micro-dipendenza al controllo (messaggio che forse arriva)." },
       { icon: "❤️", title: "Ricompense variabili", stat: `${dopamineSpikes} spike • +${likesReceived} like ricevuti`, caption: "Ricompense intermittenti (non prevedibili) funzionano come le slot: non sai quando arriva, quindi continui." },
       { icon: "📜", title: "Scroll infinito", stat: `${Math.round(scrollDistance / 100)}m • post generati: ${activePosts.length}`, caption: "Assenza di \"fine\" naturale: senza un punto di stop, l'azione di fermarsi richiede più sforzo di quella di continuare." },

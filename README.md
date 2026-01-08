@@ -25,7 +25,7 @@ Il sito è hostato su Vercel: [scrolltrap.it](https://scrolltrap.it)
 
 ## 👨‍💻 Autore
 
-**Ernesto Belisario** - Avvocato esperto di diritto delle tecnologie
+**Ernesto Belisario** 
 
 📧 edu@ernestobelisario.eu
 

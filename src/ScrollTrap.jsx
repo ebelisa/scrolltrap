@@ -549,6 +549,18 @@ export default function ScrollTrap() {
 
   useEffect(() => { moodRef.current = mood; }, [mood]);
 
+  // Fix scroll when entering reveal
+  useEffect(() => {
+    if (gameState === "reveal") {
+      document.body.style.overflow = "auto";
+      document.documentElement.style.overflow = "auto";
+      window.scrollTo(0, 0);
+    } else if (gameState === "playing") {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    }
+  }, [gameState]);
+
   useEffect(() => {
     if (gameState !== "playing") return;
     const moodTimer = setInterval(() => {
@@ -1506,7 +1518,7 @@ export default function ScrollTrap() {
     ];
 
     return (
-      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#0a0a0a 0%, #111827 45%, #0a0a0a 100%)", padding: "34px 18px 56px", fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif", color: "#fff" }} onMouseDown={unlockAudio} onTouchStart={unlockAudio}>
+      <div style={{ minHeight: "100vh", height: "100%", overflowY: "auto", overflowX: "hidden", background: "linear-gradient(180deg,#0a0a0a 0%, #111827 45%, #0a0a0a 100%)", padding: "34px 18px 56px", fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif", color: "#fff", WebkitOverflowScrolling: "touch" }} onMouseDown={unlockAudio} onTouchStart={unlockAudio}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 22 }}>
             <div style={{ fontSize: 70, marginBottom: 10 }}>🪤</div>

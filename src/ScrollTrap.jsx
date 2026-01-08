@@ -53,12 +53,14 @@ function pick(arr) {
 }
 
 // Reel video component with autoplay on viewport
-function ReelVideo({ videoId, onPlay, style }) {
+function ReelVideo({ videoUrl, onPlay, style }) {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [hasError, setHasError] = useState(false);
+  const hasTriggeredPlay = useRef(false);
 
   // Intersection Observer for autoplay
   useEffect(() => {
@@ -72,7 +74,10 @@ function ReelVideo({ videoId, onPlay, style }) {
           if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
             video.play().catch(() => {});
             setIsPlaying(true);
-            if (onPlay) onPlay();
+            if (onPlay && !hasTriggeredPlay.current) {
+              hasTriggeredPlay.current = true;
+              onPlay();
+            }
           } else {
             video.pause();
             setIsPlaying(false);
@@ -106,10 +111,17 @@ function ReelVideo({ videoId, onPlay, style }) {
     }
   };
 
-  const videoUrl = `https://videos.pexels.com/video-files/${videoId}/${videoId}-hd_1080_1920_25fps.mp4`;
+  if (hasError) {
+    return (
+      <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, ...style }}>
+        <span style={{ fontSize: 48 }}>🎬</span>
+        <span style={{ color: "#9ca3af", fontSize: 14 }}>Video in caricamento...</span>
+      </div>
+    );
+  }
 
   return (
-    <div ref={containerRef} style={{ position: "relative", width: "100%", ...style }} onClick={toggleMute}>
+    <div ref={containerRef} style={{ position: "relative", width: "100%", height: "100%", background: "#000", ...style }} onClick={toggleMute}>
       <video
         ref={videoRef}
         src={videoUrl}
@@ -117,6 +129,7 @@ function ReelVideo({ videoId, onPlay, style }) {
         muted={isMuted}
         playsInline
         preload="metadata"
+        onError={() => setHasError(true)}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
       />
       {/* Progress bar */}
@@ -352,39 +365,28 @@ export default function ScrollTrap() {
     ],
   }), []);
 
-  // Video database per Reels (Pexels video IDs)
-  const videoDB = useMemo(() => ({
-    music: [
-      { id: "3015510", caption: "vibes 🎧" },
-      { id: "4057411", caption: "festival mode 🔥" },
-      { id: "4488162", caption: "party time 🎉" },
-    ],
-    style: [
-      { id: "4536342", caption: "fit check ✨" },
-      { id: "5538090", caption: "shopping day 🛍️" },
-      { id: "5199826", caption: "new drip 💧" },
-    ],
-    sports: [
-      { id: "4761555", caption: "grind don't stop 💪" },
-      { id: "4065388", caption: "no excuses 🔥" },
-      { id: "5319685", caption: "game day 🏆" },
-    ],
-    lifestyle: [
-      { id: "4812202", caption: "aesthetic ✨" },
-      { id: "4253191", caption: "golden hour 🌅" },
-      { id: "3209211", caption: "mood rn" },
-    ],
-    memes: [
-      { id: "4057393", caption: "pov: monday" },
-      { id: "5752722", caption: "real 💀" },
-      { id: "6010489", caption: "no thoughts just vibes" },
-    ],
-  }), []);
+  // Video database per Reels (video gratuiti pubblici)
+  const videoDB = useMemo(() => [
+    // Mixkit free videos (vertical/lifestyle content)
+    "https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-woman-running-above-the-camera-on-a-running-track-32807-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-fashion-woman-with-silver-makeup-39875-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-young-woman-waving-on-a-video-call-on-smartphone-50303-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-girl-dancing-happy-at-a-party-4535-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-man-dancing-under-changing-lights-1240-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-excited-young-people-partying-with-party-hats-4608-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-woman-modeling-hoop-earrings-in-front-of-blue-background-39885-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-dj-playing-music-at-a-concert-4344-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-taking-photos-from-different-angles-of-a-model-34421-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smart-phone-close-up-4694-small.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-friends-with-colored-smoke-702-small.mp4",
+  ], []);
 
   const reelCaptions = useMemo(() => [
     "wait for it... 😳", "questo è pazzesco", "chi altro? 👇", "non ci credo 💀",
     "POV:", "devo dire una cosa...", "unpopular opinion:", "storytime 📖",
     "greenscreen questa cosa", "rispondimi @", "duetto con me", "🔥🔥🔥",
+    "no vabbè 😭", "real talk:", "prova anche tu", "trend check ✓",
   ], []);
 
   const overlaysByCat = useMemo(() => ({
@@ -628,8 +630,8 @@ export default function ScrollTrap() {
   }, [imageDB, overlaysByCat, teenUsernames]);
 
   // Build Reel post
-  const buildReel = useCallback(({ id, user, cat }) => {
-    const videoData = pick(videoDB[cat] || videoDB.lifestyle);
+  const buildReel = useCallback(({ id, user }) => {
+    const videoUrl = pick(videoDB);
     const avatarId = pick(imageDB.friends);
     const caption = pick(reelCaptions);
     
@@ -640,7 +642,7 @@ export default function ScrollTrap() {
       verified: Math.random() > 0.7,
       content: caption,
       isReel: true,
-      videoId: videoData.id,
+      videoUrl: videoUrl,
       likes: Math.floor(Math.random() * 25000) + 1000,
       comments: Math.floor(Math.random() * 800) + 50,
       shares: Math.floor(Math.random() * 500) + 20,
@@ -657,10 +659,10 @@ export default function ScrollTrap() {
   const initialPosts = useMemo(() => [
     buildPost({ id: 1, user: "giu.rossi", cat: "friends", caption: pick(captionsByCat.friends) }),
     buildPost({ id: 2, user: "nico.mp4", cat: "music", caption: pick(captionsByCat.music) }),
-    buildReel({ id: 3, user: "emma_x", cat: "style" }),
+    buildReel({ id: 3, user: "emma_x" }),
     buildPost({ id: 4, user: "fra_04", cat: "memes", caption: pick(captionsByCat.memes) }),
     buildPost({ id: 5, user: "SPONSORED", cat: "style", caption: "🔥 Solo oggi: sconto del 60%! Tocca per vedere", isAd: true }),
-    buildReel({ id: 6, user: "leo_gamer", cat: "sports" }),
+    buildReel({ id: 6, user: "leo_gamer" }),
   ], [buildPost, buildReel, captionsByCat]);
 
   // ==================== EFFECTS ====================
@@ -859,11 +861,9 @@ export default function ScrollTrap() {
             
             if (isReel) {
               // Generate a Reel
-              const reelCat = ["music", "style", "sports", "lifestyle", "memes"][Math.floor(Math.random() * 5)];
               const newReel = buildReel({
                 id: postId,
                 user: pick(teenUsernames),
-                cat: reelCat,
               });
               batch.push(newReel);
             } else {
@@ -1220,7 +1220,7 @@ export default function ScrollTrap() {
                 /* REEL VIDEO */
                 <div style={{ width: "100%", aspectRatio: "9 / 16", maxHeight: "70vh", position: "relative", overflow: "hidden", background: "#000" }} onDoubleClick={() => handleLike(post)}>
                   <ReelVideo 
-                    videoId={post.videoId} 
+                    videoUrl={post.videoUrl} 
                     onPlay={() => {
                       setUserInterests((prev) => {
                         const cat = post.type === "reel" ? "music" : post.type;

@@ -52,106 +52,98 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// Reel video component with autoplay on viewport
-function ReelVideo({ videoUrl, onPlay, style }) {
-  const videoRef = useRef(null);
+// Reel video component - thumbnail + play on click
+function ReelVideo({ youtubeId, onPlay, style }) {
   const containerRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-  const [progress, setProgress] = useState(0);
-  const [hasError, setHasError] = useState(false);
   const hasTriggeredPlay = useRef(false);
 
-  // Intersection Observer for autoplay
+  // Track when visible
   useEffect(() => {
-    const video = videoRef.current;
     const container = containerRef.current;
-    if (!video || !container) return;
+    if (!container) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
-            video.play().catch(() => {});
-            setIsPlaying(true);
+          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
             if (onPlay && !hasTriggeredPlay.current) {
               hasTriggeredPlay.current = true;
               onPlay();
             }
-          } else {
-            video.pause();
-            setIsPlaying(false);
           }
         });
       },
-      { threshold: [0.6] }
+      { threshold: [0.5] }
     );
 
     observer.observe(container);
     return () => observer.disconnect();
   }, [onPlay]);
 
-  // Progress tracking
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const updateProgress = () => {
-      if (video.duration) {
-        setProgress((video.currentTime / video.duration) * 100);
-      }
-    };
-    video.addEventListener("timeupdate", updateProgress);
-    return () => video.removeEventListener("timeupdate", updateProgress);
-  }, []);
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsMuted(!isMuted);
-    }
+  const handlePlay = () => {
+    setIsPlaying(true);
   };
 
-  if (hasError) {
-    return (
-      <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, ...style }}>
-        <span style={{ fontSize: 48 }}>🎬</span>
-        <span style={{ color: "#9ca3af", fontSize: 14 }}>Video in caricamento...</span>
-      </div>
-    );
-  }
+  // Thumbnail from YouTube
+  const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/0.jpg`;
+  
+  // YouTube embed URL (starts when clicked)
+  const embedUrl = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=0&loop=1&playlist=${youtubeId}&controls=1&rel=0&modestbranding=1&playsinline=1`;
 
   return (
-    <div ref={containerRef} style={{ position: "relative", width: "100%", height: "100%", background: "#000", ...style }} onClick={toggleMute}>
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        loop
-        muted={isMuted}
-        playsInline
-        preload="metadata"
-        onError={() => setHasError(true)}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-      />
-      {/* Progress bar */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: "rgba(255,255,255,0.2)" }}>
-        <div style={{ height: "100%", width: `${progress}%`, background: "#fff", transition: "width 0.1s linear" }} />
-      </div>
-      {/* Mute indicator */}
-      <div style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ fontSize: 16 }}>{isMuted ? "🔇" : "🔊"}</span>
-      </div>
-      {/* Reel badge */}
-      <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,0.6)", borderRadius: 8, padding: "4px 10px", display: "flex", alignItems: "center", gap: 6 }}>
-        <span style={{ fontSize: 14 }}>🎬</span>
-        <span style={{ fontSize: 12, fontWeight: 900, color: "#fff" }}>Reel</span>
-      </div>
-      {/* Play indicator when paused */}
-      {!isPlaying && (
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)" }}>
-          <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontSize: 24, marginLeft: 4 }}>▶</span>
+    <div ref={containerRef} style={{ position: "relative", width: "100%", height: "100%", background: "#000", ...style }}>
+      {!isPlaying ? (
+        <>
+          {/* Thumbnail */}
+          <img 
+            src={thumbnailUrl} 
+            alt="Reel" 
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          {/* Play button overlay */}
+          <div 
+            onClick={handlePlay}
+            style={{ 
+              position: "absolute", 
+              inset: 0, 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              background: "rgba(0,0,0,0.3)",
+              cursor: "pointer"
+            }}
+          >
+            <div style={{ 
+              width: 70, 
+              height: 70, 
+              borderRadius: "50%", 
+              background: "rgba(255,255,255,0.95)", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.4)"
+            }}>
+              <span style={{ fontSize: 30, marginLeft: 6, color: "#000" }}>▶</span>
+            </div>
           </div>
-        </div>
+          {/* Reel badge */}
+          <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,0.7)", borderRadius: 8, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6, zIndex: 10 }}>
+            <span style={{ fontSize: 14 }}>🎬</span>
+            <span style={{ fontSize: 12, fontWeight: 900, color: "#fff" }}>Reel</span>
+          </div>
+          {/* Tap to watch text */}
+          <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, textAlign: "center" }}>
+            <span style={{ background: "rgba(0,0,0,0.6)", padding: "8px 16px", borderRadius: 20, fontSize: 13, color: "#fff", fontWeight: 600 }}>Tocca per guardare</span>
+          </div>
+        </>
+      ) : (
+        <iframe
+          src={embedUrl}
+          style={{ width: "100%", height: "100%", border: "none" }}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
       )}
     </div>
   );
@@ -365,21 +357,16 @@ export default function ScrollTrap() {
     ],
   }), []);
 
-  // Video database per Reels (video gratuiti pubblici)
+  // YouTube Shorts IDs reali (video verticali, virali, embeddabili)
   const videoDB = useMemo(() => [
-    // Mixkit free videos (vertical/lifestyle content)
-    "https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-woman-running-above-the-camera-on-a-running-track-32807-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-fashion-woman-with-silver-makeup-39875-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-young-woman-waving-on-a-video-call-on-smartphone-50303-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-girl-dancing-happy-at-a-party-4535-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-man-dancing-under-changing-lights-1240-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-excited-young-people-partying-with-party-hats-4608-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-woman-modeling-hoop-earrings-in-front-of-blue-background-39885-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-dj-playing-music-at-a-concert-4344-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-taking-photos-from-different-angles-of-a-model-34421-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smart-phone-close-up-4694-small.mp4",
-    "https://assets.mixkit.co/videos/preview/mixkit-friends-with-colored-smoke-702-small.mp4",
+    "ZbZSe6N_BXs", // Satisfying video
+    "dQw4w9WgXcQ", // Rick Roll (meme classico)
+    "2vjPBrBU-TM", // Satisfying slime
+    "LXb3EKWsInQ", // COSTA TITCH - Big Flexa
+    "pSUydWEqKwE", // Talking cat meme
+    "wyx6JDQCslE", // Coldplay - Viva la Vida
+    "kffacxfA7G4", // Bad guy - Billie Eilish
+    "hT_nvWreIhg", // OneRepublic - Counting Stars
   ], []);
 
   const reelCaptions = useMemo(() => [
@@ -631,7 +618,7 @@ export default function ScrollTrap() {
 
   // Build Reel post
   const buildReel = useCallback(({ id, user }) => {
-    const videoUrl = pick(videoDB);
+    const youtubeId = pick(videoDB);
     const avatarId = pick(imageDB.friends);
     const caption = pick(reelCaptions);
     
@@ -642,7 +629,7 @@ export default function ScrollTrap() {
       verified: Math.random() > 0.7,
       content: caption,
       isReel: true,
-      videoUrl: videoUrl,
+      youtubeId: youtubeId,
       likes: Math.floor(Math.random() * 25000) + 1000,
       comments: Math.floor(Math.random() * 800) + 50,
       shares: Math.floor(Math.random() * 500) + 20,
@@ -1220,7 +1207,7 @@ export default function ScrollTrap() {
                 /* REEL VIDEO */
                 <div style={{ width: "100%", aspectRatio: "9 / 16", maxHeight: "70vh", position: "relative", overflow: "hidden", background: "#000" }} onDoubleClick={() => handleLike(post)}>
                   <ReelVideo 
-                    videoUrl={post.videoUrl} 
+                    youtubeId={post.youtubeId} 
                     onPlay={() => {
                       setUserInterests((prev) => {
                         const cat = post.type === "reel" ? "music" : post.type;

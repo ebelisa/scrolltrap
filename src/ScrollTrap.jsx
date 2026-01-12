@@ -299,123 +299,160 @@ export default function ScrollTrap() {
   const lastScrollRef = useRef(0);
 
   // ==================== DATA ====================
-  const imageDB = useMemo(() => ({
+  // Content packs GenZ - foto + caption AUTENTICHE italiane
+  const contentPacks = useMemo(() => ({
     friends: [
-      // Selfie e gruppi di amici trendy
-      "photo-1529626455594-4ff0802cfb7e", "photo-1517841905240-472988babdf9",
-      "photo-1524504388940-b1c1722653e1", "photo-1529156069898-49953e39b3ac",
-      "photo-1543269865-cbf427effbad", "photo-1544005313-94ddf0286df2",
-      "photo-1534528741775-53994a69daeb", "photo-1488161628813-04466f0be7fc",
-      "photo-1529333166437-7750a6dd5a70", "photo-1539571696357-5a69c17a67c6",
-      "photo-1524638431109-93d95c968f03", "photo-1517462964-21fdcec3f25b",
-      "photo-1528892952291-009c663ce843", "photo-1507003211169-0a1dd7228f2d",
-      "photo-1488426862026-3ee34a7d66df", "photo-1524250502761-1ac6f2e30d43",
+      { img: "photo-1529626455594-4ff0802cfb7e", caption: "le mie 🤍" },
+      { img: "photo-1529156069898-49953e39b3ac", caption: "noi" },
+      { img: "photo-1543269865-cbf427effbad", caption: "seratina" },
+      { img: "photo-1524638431109-93d95c968f03", caption: "fra che ridere ieri" },
+      { img: "photo-1517462964-21fdcec3f25b", caption: "ci si rivede 🫶" },
+      { img: "photo-1529333166437-7750a6dd5a70", caption: "raga vi voglio bene" },
+      { img: "photo-1539571696357-5a69c17a67c6", caption: "queste serate >>" },
+      { img: "photo-1524504388940-b1c1722653e1", caption: "dump" },
     ],
-    crush: [
-      // Foto estetiche e romantiche
-      "photo-1524502397800-2eeaad7c3fe5", "photo-1502823403499-6ccfcf4fb453",
-      "photo-1516726817505-f5ed825624d8", "photo-1500917293891-ef795e70e1f6",
-      "photo-1515886657613-9f3515b0c78f", "photo-1529626455594-4ff0802cfb7e",
-      "photo-1524638431109-93d95c968f03", "photo-1502767089025-6572583495b6",
-      "photo-1519699047748-de8e457a634e", "photo-1492446845049-9c50cc313f00",
+    selfie: [
+      { img: "photo-1534528741775-53994a69daeb", caption: "📸" },
+      { img: "photo-1517841905240-472988babdf9", caption: "nuova me" },
+      { img: "photo-1544005313-94ddf0286df2", caption: "oggi sì" },
+      { img: "photo-1488426862026-3ee34a7d66df", caption: "mi piacevo" },
+      { img: "photo-1507003211169-0a1dd7228f2d", caption: "." },
+      { img: "photo-1524250502761-1ac6f2e30d43", caption: "vabbè" },
+      { img: "photo-1528892952291-009c663ce843", caption: "specchio amico" },
+    ],
+    aesthetic: [
+      { img: "photo-1519638399535-1b036603ac77", caption: "🌙" },
+      { img: "photo-1502823403499-6ccfcf4fb453", caption: "momenti" },
+      { img: "photo-1516726817505-f5ed825624d8", caption: "✨" },
+      { img: "photo-1500917293891-ef795e70e1f6", caption: "giornate così" },
+      { img: "photo-1515886657613-9f3515b0c78f", caption: "tutto qui" },
+      { img: "photo-1502767089025-6572583495b6", caption: "ricordi belli" },
+      { img: "photo-1519699047748-de8e457a634e", caption: "💫" },
     ],
     music: [
-      // Concerti, festival, DJ, cuffie
-      "photo-1493225457124-a3eb161ffa5f", "photo-1511671782779-c97d3d27a1d4",
-      "photo-1506157786151-b8491531f063", "photo-1470225620780-dba8ba36b745",
-      "photo-1429962714451-bb934ecdc4ec", "photo-1459749411175-04bf5292ceea",
-      "photo-1514525253161-7a46d19cd819", "photo-1501386761578-eac5c94b800a",
-      "photo-1524368535928-5b5e00ddc76b", "photo-1571266028243-d220c6a40e6a",
-      "photo-1598387993441-a364f854c3e1", "photo-1493676304819-0d7a8d026dcf",
+      { img: "photo-1493225457124-a3eb161ffa5f", caption: "che concerto ragazzi" },
+      { img: "photo-1511671782779-c97d3d27a1d4", caption: "si vola 🎪" },
+      { img: "photo-1506157786151-b8491531f063", caption: "una bomba ieri sera" },
+      { img: "photo-1470225620780-dba8ba36b745", caption: "🔊🔊🔊" },
+      { img: "photo-1514525253161-7a46d19cd819", caption: "raga era pazzesco" },
+      { img: "photo-1501386761578-eac5c94b800a", caption: "indimenticabile" },
+      { img: "photo-1524368535928-5b5e00ddc76b", caption: "🎧" },
+      { img: "photo-1571266028243-d220c6a40e6a", caption: "in loop da ore" },
     ],
     style: [
-      // Outfit, sneakers, streetwear
-      "photo-1542291026-7eec264c27ff", "photo-1483985988355-763728e1935b",
-      "photo-1509631179647-0177331693ae", "photo-1515886657613-9f3515b0c78f",
-      "photo-1552374196-1ab2a1c593e8", "photo-1521334884684-d80222895322",
-      "photo-1556905055-8f358a7a47b2", "photo-1551488831-00ddcb6c6bd3",
-      "photo-1560243563-062bfc001d68", "photo-1529139574466-a303027c1d8b",
-      "photo-1558171013-36c8b1a5e238", "photo-1495121605193-b116b5b9c5fe",
+      { img: "photo-1542291026-7eec264c27ff", caption: "nuove 👟" },
+      { img: "photo-1483985988355-763728e1935b", caption: "danni" },
+      { img: "photo-1509631179647-0177331693ae", caption: "fit" },
+      { img: "photo-1552374196-1ab2a1c593e8", caption: "outfit del giorno" },
+      { img: "photo-1521334884684-d80222895322", caption: "ootd 📸" },
+      { img: "photo-1556905055-8f358a7a47b2", caption: "che ne dite" },
+      { img: "photo-1560243563-062bfc001d68", caption: "finalmente arrivate" },
+      { img: "photo-1558171013-36c8b1a5e238", caption: "🔥" },
     ],
     sports: [
-      // Palestra, skateboard, sport di tendenza
-      "photo-1517649763962-0c623066013b", "photo-1534438327276-14e5300c3a48",
-      "photo-1581009146145-b5ef050c2e1e", "photo-1549060279-7e168fcee0c2",
-      "photo-1571019614242-c5c5dee9f50b", "photo-1547347298-4074fc3086f0",
-      "photo-1564415315949-7a0c4c73aab4", "photo-1599058917765-a780eda07a3e",
-      "photo-1519311965067-36d3e5f33d39", "photo-1571902943202-507ec2618e8f",
-      "photo-1583454110551-21f2fa2afe61", "photo-1605296867304-46d5465a13f1",
+      { img: "photo-1517649763962-0c623066013b", caption: "si soffre" },
+      { img: "photo-1534438327276-14e5300c3a48", caption: "day 47" },
+      { img: "photo-1581009146145-b5ef050c2e1e", caption: "buongiorno così" },
+      { img: "photo-1549060279-7e168fcee0c2", caption: "🛹" },
+      { img: "photo-1571019614242-c5c5dee9f50b", caption: "record" },
+      { img: "photo-1599058917765-a780eda07a3e", caption: "🏀" },
+      { img: "photo-1571902943202-507ec2618e8f", caption: "fatto ✓" },
+      { img: "photo-1583454110551-21f2fa2afe61", caption: "gambe distrutte" },
     ],
     memes: [
-      // Contenuti virali, reaction, pets divertenti
-      "photo-1517849845537-4d257902454a", "photo-1587300003388-59208cc962cb",
-      "photo-1574158622682-e40e69881006", "photo-1583511655857-d19b40a7a54e",
-      "photo-1543466835-00a7907e9de1", "photo-1514888286974-6c03e2ca1dba",
-      "photo-1518791841217-8f162f1e1131", "photo-1591946614720-90a587da4a36",
-      "photo-1537151625747-768eb6cf92b2", "photo-1583337130417-3346a1be7dee",
-      "photo-1596854407944-bf87f6fdd49e", "photo-1561037404-61cd46aa615b",
+      { img: "photo-1517849845537-4d257902454a", caption: "mood" },
+      { img: "photo-1587300003388-59208cc962cb", caption: "io oggi" },
+      { img: "photo-1574158622682-e40e69881006", caption: "lunedì be like" },
+      { img: "photo-1583511655857-d19b40a7a54e", caption: "letteralmente io" },
+      { img: "photo-1543466835-00a7907e9de1", caption: "vabbè raga" },
+      { img: "photo-1514888286974-6c03e2ca1dba", caption: "aiuto" },
+      { img: "photo-1518791841217-8f162f1e1131", caption: "nel gruppo ora" },
+      { img: "photo-1591946614720-90a587da4a36", caption: "💀💀💀" },
+    ],
+    food: [
+      { img: "photo-1565299624946-b28f40a0ae38", caption: "che fame" },
+      { img: "photo-1567620905732-2d1ec7ab7445", caption: "brunch della domenica" },
+      { img: "photo-1540189549336-e6e99c3679fe", caption: "si mangia" },
+      { img: "photo-1504674900247-0877df9cc836", caption: "buonissimo raga" },
+      { img: "photo-1476224203421-9ac39bcb3327", caption: "sgarro" },
+    ],
+    travel: [
+      { img: "photo-1507525428034-b723cf961d3e", caption: "portatemi via" },
+      { img: "photo-1520483601560-389dff434fdf", caption: "📍" },
+      { img: "photo-1502920917128-1aa500764cbd", caption: "questi posti" },
+      { img: "photo-1500530855697-b586d89ba3ee", caption: "che bello qui" },
+      { img: "photo-1476514525535-07fb3b4ae5f1", caption: "già mi manca" },
     ],
   }), []);
 
-  // YouTube Shorts IDs reali (video verticali, virali, embeddabili)
-  const videoDB = useMemo(() => [
-    "ZbZSe6N_BXs", // Satisfying video
-    "dQw4w9WgXcQ", // Rick Roll (meme classico)
-    "2vjPBrBU-TM", // Satisfying slime
-    "LXb3EKWsInQ", // COSTA TITCH - Big Flexa
-    "pSUydWEqKwE", // Talking cat meme
-    "wyx6JDQCslE", // Coldplay - Viva la Vida
-    "kffacxfA7G4", // Bad guy - Billie Eilish
-    "hT_nvWreIhg", // OneRepublic - Counting Stars
+  // Backward compatibility - extract just image IDs
+  const imageDB = useMemo(() => ({
+    friends: contentPacks.friends.map(p => p.img),
+    crush: contentPacks.aesthetic.map(p => p.img),
+    music: contentPacks.music.map(p => p.img),
+    style: contentPacks.style.map(p => p.img),
+    sports: contentPacks.sports.map(p => p.img),
+    memes: contentPacks.memes.map(p => p.img),
+  }), [contentPacks]);
+
+  // YouTube Shorts con caption AUTENTICHE italiane GenZ
+  const reelPacks = useMemo(() => [
+    { id: "ZbZSe6N_BXs", caption: "oddio guardate questo" },
+    { id: "dQw4w9WgXcQ", caption: "aspetta la fine 💀" },
+    { id: "LXb3EKWsInQ", caption: "raga che bomba" },
+    { id: "kffacxfA7G4", caption: "🎧🔥" },
+    { id: "hT_nvWreIhg", caption: "in loop" },
+    { id: "wyx6JDQCslE", caption: "alle 3 di notte questa >>" },
+    { id: "OPf0YbXqDm0", caption: "tutorial?" },
+    { id: "JGwWNGJdvx8", caption: "vibe" },
+    { id: "9bZkp7q19f0", caption: "nostalgia" },
+    { id: "kJQP7kiw5Fk", caption: "estate 🌴" },
   ], []);
 
-  const reelCaptions = useMemo(() => [
-    "wait for it... 😳", "questo è pazzesco", "chi altro? 👇", "non ci credo 💀",
-    "POV:", "devo dire una cosa...", "unpopular opinion:", "storytime 📖",
-    "greenscreen questa cosa", "rispondimi @", "duetto con me", "🔥🔥🔥",
-    "no vabbè 😭", "real talk:", "prova anche tu", "trend check ✓",
-  ], []);
+  // Backward compatibility
+  const videoDB = useMemo(() => reelPacks.map(p => p.id), [reelPacks]);
+  const reelCaptions = useMemo(() => reelPacks.map(p => p.caption), [reelPacks]);
 
   const overlaysByCat = useMemo(() => ({
-    friends: ["Roma 📍", "Milano 📍", "Sabato sera 🌙", "con la squad 👯", ""],
-    crush: ["close friends 💜", "👀", "rispondimi", "solo per te", ""],
-    music: ["LIVE 🎤", "in repeat 🔁", "tour 2026", "sold out", ""],
-    style: ["fit check ✨", "new drop 🔥", "haul", "cop or drop?", ""],
-    sports: ["gym day 💪", "no excuses", "PR today", "game day 🏆", ""],
-    memes: ["POV:", "mood rn", "💀💀💀", "real", "io @ 3am", ""],
+    friends: ["Roma 📍", "Milano 📍", "sabato 🌙", "serata", ""],
+    crush: ["amici stretti 💜", "👀", "", "solo per te", ""],
+    music: ["LIVE 🎤", "🔁", "tour 2026", "sold out", ""],
+    style: ["ootd ✨", "new 🔥", "haul", "", ""],
+    sports: ["palestra 💪", "", "record", "partita 🏆", ""],
+    memes: ["", "mood", "💀💀💀", "", ""],
   }), []);
 
+  // Queste caption non servono più - usiamo contentPacks
   const captionsByCat = useMemo(() => ({
     friends: [
-      "no caption needed 🤷", "core memory unlocked", "tagga chi manca 👀",
-      "era necessario", "chi c'era lo sa", "plot twist: ci siamo divertiti",
-      "la squad >>> tutto", "non so che scrivere ma vabbè",
+      "noi", "dump", "serata",
+      "raga", "che ridere", "🤍",
     ],
     crush: [
-      "ti devo dire una cosa…", "rispondimi challenge", "non guardarmi così",
-      "se capisci capisci", "pov: non ti risponde", "aspetto… 👀",
+      ".", "👀", "vabbè",
+      "boh", "🫶", "",
     ],
     music: [
-      "in repeat da 3 ore 🎧", "chi viene al live??", "questo artista >>>>>",
-      "obsessed fr", "la mia terapia", "eargasm",
+      "in loop 🎧", "chi viene??", "che bomba",
+      "top", "terapia", "🔊",
     ],
     style: [
-      "fit check ✅", "oggi così casual", "new pickups 🛍️",
-      "rate 1-10? 👇", "thrifted tutto", "drip or drown",
+      "fit", "oggi così", "nuove 🛍️",
+      "che dite? 👇", "trovate", "drip",
     ],
     sports: [
-      "no pain no gain 💪", "leg day survived", "new PR lesgooo",
-      "gym > therapy", "5am grindset", "recovery day (finally)",
+      "si soffre 💪", "gambe finite", "record",
+      "palestra", "buongiorno", "riposo",
     ],
     memes: [
-      "POV: è lunedì", "io che dico 'ultimo scroll'", "mood rn fr",
-      "quando ti svegli e:", "non sono io è l'algoritmo", "relatable?",
+      "lunedì", "ultimo scroll", "mood",
+      "io appena sveglio", "boh", "raga",
       "SHOCK: quello che non ti dicono 😱",
       "NON CI CREDERAI: guarda cosa è successo",
       "TUTTI ne parlano e tu? 🔥",
       "devi vedere questo SUBITO",
       "la verità che nessuno ti dice",
-      "real af 💀",
+      "💀",
     ],
   }), []);
 
@@ -583,12 +620,18 @@ export default function ScrollTrap() {
   ], []);
 
   // ==================== BUILD POST (NO MUTATIONS) ====================
+  // Build post with coherent content (photo + caption match)
   const buildPost = useCallback(({
     id, user, cat, caption, isAd = false,
     imageUrl, imageOverlay, postType, isFake, fomoText
   }) => {
-    const imgId = pick(imageDB[cat]);
-    const overlay = pick(overlaysByCat[cat]);
+    // Pick coherent content pack if available
+    const catPacks = contentPacks[cat] || contentPacks.friends;
+    const contentPack = pick(catPacks);
+    const coherentCaption = caption || contentPack.caption;
+    const coherentImg = imageUrl || buildUnsplashUrl(contentPack.img, 900);
+    
+    const overlay = pick(overlaysByCat[cat] || overlaysByCat.friends);
     const avatarId = pick(imageDB.friends);
 
     return {
@@ -596,10 +639,10 @@ export default function ScrollTrap() {
       user,
       avatar: buildUnsplashUrl(avatarId, 180),
       verified: isAd || Math.random() > 0.84,
-      content: caption,
+      content: coherentCaption,
       image: {
         type: cat,
-        url: imageUrl !== undefined ? imageUrl : buildUnsplashUrl(imgId, 900),
+        url: coherentImg,
         overlay: imageOverlay !== undefined ? imageOverlay : (isAd ? "SPONSORED" : overlay),
       },
       likes: Math.floor(Math.random() * 8000) + 120,
@@ -610,26 +653,25 @@ export default function ScrollTrap() {
       fake: isFake !== undefined ? isFake : false,
       fomoText: fomoText !== undefined ? fomoText : null,
       commentsList: [
-        { user: pick(teenUsernames), text: pick(["🔥🔥", "lol", "no vabbè", "che bello", "😍", "💀"]), avatar: 11 },
-        { user: pick(teenUsernames), text: pick(["dove?", "taggami", "io", "ahah", "ok"]), avatar: 22 },
+        { user: pick(teenUsernames), text: pick(["🔥🔥", "top", "bellissima", "wow", "😍", "💀"]), avatar: 11 },
+        { user: pick(teenUsernames), text: pick(["dove??", "taggami", "voglio", "ahahah", "bella"]), avatar: 22 },
       ],
     };
-  }, [imageDB, overlaysByCat, teenUsernames]);
+  }, [contentPacks, imageDB, overlaysByCat, teenUsernames]);
 
-  // Build Reel post
+  // Build Reel post with coherent video + caption
   const buildReel = useCallback(({ id, user }) => {
-    const youtubeId = pick(videoDB);
+    const reelPack = pick(reelPacks);
     const avatarId = pick(imageDB.friends);
-    const caption = pick(reelCaptions);
     
     return {
       id,
       user,
       avatar: buildUnsplashUrl(avatarId, 180),
       verified: Math.random() > 0.7,
-      content: caption,
+      content: reelPack.caption,
       isReel: true,
-      youtubeId: youtubeId,
+      youtubeId: reelPack.id,
       likes: Math.floor(Math.random() * 25000) + 1000,
       comments: Math.floor(Math.random() * 800) + 50,
       shares: Math.floor(Math.random() * 500) + 20,
@@ -637,20 +679,22 @@ export default function ScrollTrap() {
       isAd: false,
       type: "reel",
       commentsList: [
-        { user: pick(teenUsernames), text: pick(["🔥🔥🔥", "tutorial?", "share!", "😍😍", "💀💀", "oddio"]), avatar: 11 },
-        { user: pick(teenUsernames), text: pick(["come hai fatto?", "pazzesco", "io morta", "no vabbe"]), avatar: 22 },
+        { user: pick(teenUsernames), text: pick(["🔥🔥🔥", "tutorial", "manda", "wow", "💀💀", "assurdo"]), avatar: 11 },
+        { user: pick(teenUsernames), text: pick(["come?", "pazzesco", "raga", "oddio", "bello"]), avatar: 22 },
       ],
     };
-  }, [videoDB, imageDB, reelCaptions, teenUsernames]);
+  }, [reelPacks, imageDB, teenUsernames]);
 
   const initialPosts = useMemo(() => [
-    buildPost({ id: 1, user: "giu.rossi", cat: "friends", caption: pick(captionsByCat.friends) }),
-    buildPost({ id: 2, user: "nico.mp4", cat: "music", caption: pick(captionsByCat.music) }),
+    buildPost({ id: 1, user: "giu.rossi", cat: "friends" }),
+    buildPost({ id: 2, user: "nico.mp4", cat: "music" }),
     buildReel({ id: 3, user: "emma_x" }),
-    buildPost({ id: 4, user: "fra_04", cat: "memes", caption: pick(captionsByCat.memes) }),
+    buildPost({ id: 4, user: "fra_04", cat: "memes" }),
     buildPost({ id: 5, user: "SPONSORED", cat: "style", caption: "🔥 Solo oggi: sconto del 60%! Tocca per vedere", isAd: true }),
     buildReel({ id: 6, user: "leo_gamer" }),
-  ], [buildPost, buildReel, captionsByCat]);
+    buildPost({ id: 7, user: "ale.style", cat: "style" }),
+    buildPost({ id: 8, user: "marco_fit", cat: "sports" }),
+  ], [buildPost, buildReel]);
 
   // ==================== EFFECTS ====================
   useEffect(() => {
@@ -847,27 +891,22 @@ export default function ScrollTrap() {
             currentId = currentId + 1;
             
             if (isReel) {
-              // Generate a Reel
+              // Generate a Reel with coherent video + caption
               const newReel = buildReel({
                 id: postId,
                 user: pick(teenUsernames),
               });
               batch.push(newReel);
             } else {
-              // Generate regular post
-              const imgId = pick(imageDB[cat]);
-              const caption = pick(captionsByCat[cat]);
-              const overlay = pick(overlaysByCat[cat]);
+              // Generate regular post with coherent photo + caption
               const isFomo = !isAd && Math.random() > 0.72;
               const isClickbait = !isAd && cat === "memes" && Math.random() > 0.75;
               const newPost = buildPost({
                 id: postId,
                 user: isAd ? "SPONSORED" : pick(teenUsernames),
                 cat,
-                caption: isAd ? "🔥 Offerta limitata: 'Solo per oggi'. Tocca per vedere." : caption,
+                caption: isAd ? "🔥 Offerta limitata: 'Solo per oggi'. Tocca per vedere." : undefined,
                 isAd,
-                imageUrl: buildUnsplashUrl(imgId, 900),
-                imageOverlay: isAd ? "SPONSORED" : overlay,
                 postType: isAd ? "ad" : isClickbait ? "clickbait" : isFomo ? "fomo" : "normal",
                 isFake: isClickbait,
                 fomoText: isFomo ? `${Math.floor(Math.random() * 30) + 10} tuoi amici hanno interagito` : null,
@@ -881,7 +920,7 @@ export default function ScrollTrap() {
       });
       setIsLoadingMore(false);
     }, 900);
-  }, [userInterests, weightedCategoryPick, imageDB, captionsByCat, overlaysByCat, teenUsernames, buildPost, buildReel]);
+  }, [userInterests, weightedCategoryPick, teenUsernames, buildPost, buildReel]);
 
   const handleScroll = useCallback((e) => {
     const el = e.target;

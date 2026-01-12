@@ -187,6 +187,7 @@ export default function ScrollTrap() {
   const [accountName, setAccountName] = useState("");
   const [estimatedTime, setEstimatedTime] = useState(null);
   const [timeSpent, setTimeSpent] = useState(0);
+  const [showPrivacyOnly, setShowPrivacyOnly] = useState(false);
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const audioCtxRef = useRef(null);
@@ -398,29 +399,31 @@ export default function ScrollTrap() {
   // YouTube Shorts con caption AUTENTICHE italiane GenZ
   // YouTube Shorts REALI virali - contenuti diversificati 2024-2025
   // ID presi dai video più visti su YouTube Shorts
+  // YouTube Shorts REALI - Mix musica + contenuti virali 2024-2026
   const reelPacks = useMemo(() => [
-    // Satisfying / Magic tricks
-    { id: "ldSVhw1Nv50", caption: "come ha fatto?? 😱" },        // Justin Flom dress transformation
-    { id: "qeGTXIFn3gQ", caption: "troppo carino 🥺" },          // Rose Makes Brownies
-    // Comedy / Pranks  
-    { id: "3Lb5_40Qakg", caption: "mamma vs papà 💀" },          // Dad vs Mom amusement park
-    { id: "jE9SMQuF-o8", caption: "i genitori be like" },        // Parents comedy
-    // Challenge / Sports
-    { id: "aU2KRF87RPc", caption: "trick shot assurdo" },        // Colin Amazing trick shots
-    { id: "Cx4LPYA0oMQ", caption: "parkour goals 🔥" },          // Spider-Man Parkour
-    // Family / Cute
-    { id: "_RgRvHwzE4I", caption: "auguri 🎂" },                 // Happy Birthday viral
-    { id: "BNof_SlHB88", caption: "ahahahah" },                  // Batman comedy
-    // Animals / Pets
-    { id: "ALZetvgszCo", caption: "che dolce 🥹" },              // Kind animal video
-    { id: "VL_Iv3ef-74", caption: "importante" },                // Save water cute
-    // Dance / Trend
-    { id: "OPf0YbXqDm0", caption: "questo ballo >>" },           
-    { id: "kJQP7kiw5Fk", caption: "in loop" },
-    // Food
-    { id: "ztwHL6JEE6M", caption: "che fame guardando" },        // Chinese burger
-    // Random viral
-    { id: "TtPcz3hZPCc", caption: "oddio 😂" },                  // Car race monster
+    // MUSICA ITALIANA 2025-2026 (Sanremo etc)
+    { id: "guIQwWgjATY", caption: "Sanremo 2025 🎤", type: "music" },       // Olly - Balorda nostalgia
+    { id: "TpJzc0b34FA", caption: "in loop da giorni 💕", type: "music" },  // Coma_Cose - Cuoricini
+    // MUSICA INTERNAZIONALE
+    { id: "ekr2nIex040", caption: "APT APT APT 🔥", type: "music" },        // Rosé & Bruno Mars - APT
+    { id: "kJQP7kiw5Fk", caption: "classico 🎶", type: "music" },           // Despacito
+    { id: "OPf0YbXqDm0", caption: "ballo >>", type: "music" },              // Uptown Funk
+    // SATISFYING / MAGIC
+    { id: "ldSVhw1Nv50", caption: "come ha fatto?? 😱", type: "satisfying" },
+    { id: "qeGTXIFn3gQ", caption: "troppo carino 🥺", type: "satisfying" },
+    // COMEDY / PRANKS  
+    { id: "3Lb5_40Qakg", caption: "mamma vs papà 💀", type: "comedy" },
+    { id: "jE9SMQuF-o8", caption: "i genitori be like", type: "comedy" },
+    { id: "BNof_SlHB88", caption: "ahahahah", type: "comedy" },
+    { id: "TtPcz3hZPCc", caption: "oddio 😂", type: "comedy" },
+    // CHALLENGE / SPORTS
+    { id: "aU2KRF87RPc", caption: "trick shot assurdo", type: "sports" },
+    { id: "Cx4LPYA0oMQ", caption: "parkour goals 🔥", type: "sports" },
+    // CUTE / FAMILY
+    { id: "_RgRvHwzE4I", caption: "auguri 🎂", type: "cute" },
+    { id: "ALZetvgszCo", caption: "che dolce 🥹", type: "cute" },
+    // FOOD
+    { id: "ztwHL6JEE6M", caption: "che fame guardando", type: "food" },
   ], []);
 
   // Backward compatibility
@@ -673,9 +676,24 @@ export default function ScrollTrap() {
     };
   }, [contentPacks, imageDB, overlaysByCat, teenUsernames]);
 
-  // Build Reel post with coherent video + caption
+  // Track recently used reels to avoid repetition
+  const usedReelIdsRef = useRef([]);
+  const MAX_REEL_HISTORY = 8; // Remember last 8 reels
+
+  // Build Reel post with coherent video + caption (avoids recent repeats)
   const buildReel = useCallback(({ id, user }) => {
-    const reelPack = pick(reelPacks);
+    // Filter out recently used reels
+    const availableReels = reelPacks.filter(rp => !usedReelIdsRef.current.includes(rp.id));
+    // If all used, reset history
+    const poolToUse = availableReels.length > 0 ? availableReels : reelPacks;
+    const reelPack = pick(poolToUse);
+    
+    // Track this reel
+    usedReelIdsRef.current.push(reelPack.id);
+    if (usedReelIdsRef.current.length > MAX_REEL_HISTORY) {
+      usedReelIdsRef.current.shift();
+    }
+    
     const avatarId = pick(imageDB.friends);
     
     return {
@@ -1138,6 +1156,29 @@ export default function ScrollTrap() {
     return clamp(score, 0, 100);
   }, [notificationClicks, emptyNotificationClicks, timeSpent, scrollDistance, acceptedFriendRequests, sharedClickbait, adsClicked, profileVisits, storiesPollClicks]);
 
+  // ==================== RENDER: PRIVACY ONLY ====================
+  if (showPrivacyOnly) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#000", padding: 20, fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif", color: "#fff" }}>
+        <div style={{ maxWidth: 600, margin: "0 auto" }}>
+          <button onClick={() => setShowPrivacyOnly(false)} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px 20px", borderRadius: 12, cursor: "pointer", marginBottom: 20, fontWeight: 700 }}>← Torna al gioco</button>
+          <h1 style={{ fontSize: 28, fontWeight: 900, marginBottom: 20 }}>🔒 Informativa Privacy</h1>
+          <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 16, padding: 24, lineHeight: 1.7, fontSize: 14, color: "#cbd5e1" }}>
+            <p style={{ marginBottom: 16 }}><strong style={{ color: "#fff" }}>ScrollTrap</strong> è un'esperienza educativa che simula i meccanismi di engagement dei social media per aumentare la consapevolezza digitale.</p>
+            <p style={{ marginBottom: 16 }}><strong style={{ color: "#fff" }}>Nessun dato personale viene raccolto o trasmesso.</strong></p>
+            <p style={{ marginBottom: 16 }}>• Il nome/handle inserito resta solo nel tuo browser</p>
+            <p style={{ marginBottom: 16 }}>• Le statistiche di gioco sono calcolate localmente</p>
+            <p style={{ marginBottom: 16 }}>• Non utilizziamo cookie di tracciamento</p>
+            <p style={{ marginBottom: 16 }}>• Non condividiamo dati con terze parti</p>
+            <p style={{ marginBottom: 16 }}>L'app utilizza YouTube per incorporare video dimostrativi. I video vengono caricati solo quando l'utente interagisce con essi. YouTube può raccogliere dati secondo la propria informativa privacy.</p>
+            <p style={{ marginBottom: 16, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 16, marginTop: 20 }}>Progetto realizzato a scopo educativo da <strong style={{ color: "#fff" }}>Ernesto Belisario</strong> (2026).</p>
+            <p style={{ color: "#6b7280", fontSize: 12 }}>Licenza: CC BY 4.0 - Codice sorgente disponibile su GitHub</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ==================== RENDER: INTRO ====================
   if (gameState === "intro") {
     const nameOk = myHandle.length > 0;
@@ -1170,6 +1211,10 @@ export default function ScrollTrap() {
             <button onClick={() => { unlockAudio(); setSoundEnabled((s) => !s); playPop(); }} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "#9ca3af", padding: "8px 12px", borderRadius: 12, cursor: "pointer", fontWeight: 700, fontSize: 13 }}>{soundEnabled ? "🔊 Audio ON" : "🔇 Audio OFF"}</button>
           </div>
           <div style={{ marginTop: 10, color: "#6b7280", fontSize: 12 }}>Nota: l'audio funziona dopo un gesto (regola del browser).</div>
+          <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.08)", textAlign: "center" }}>
+            <div style={{ color: "#4b5563", fontSize: 11, marginBottom: 6 }}>© Ernesto Belisario 2026</div>
+            <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyOnly(true); }} style={{ color: "#6b7280", fontSize: 11, textDecoration: "underline", cursor: "pointer" }}>Privacy Policy</a>
+          </div>
         </div>
       </div>
     );
@@ -1258,7 +1303,7 @@ export default function ScrollTrap() {
               )}
               {post.isReel ? (
                 /* REEL VIDEO */
-                <div style={{ width: "100%", aspectRatio: "9 / 16", maxHeight: "70vh", position: "relative", overflow: "hidden", background: "#000" }} onDoubleClick={() => handleLike(post)}>
+                <div style={{ width: "100%", maxWidth: "calc(70vh * 9 / 16)", margin: "0 auto", aspectRatio: "9 / 16", maxHeight: "70vh", position: "relative", overflow: "hidden", background: "#000" }} onDoubleClick={() => handleLike(post)}>
                   <ReelVideo 
                     youtubeId={post.youtubeId} 
                     onPlay={() => {

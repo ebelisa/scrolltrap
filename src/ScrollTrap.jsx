@@ -396,17 +396,31 @@ export default function ScrollTrap() {
   }), [contentPacks]);
 
   // YouTube Shorts con caption AUTENTICHE italiane GenZ
+  // YouTube Shorts REALI virali - contenuti diversificati 2024-2025
+  // ID presi dai video più visti su YouTube Shorts
   const reelPacks = useMemo(() => [
-    { id: "ZbZSe6N_BXs", caption: "oddio guardate questo" },
-    { id: "dQw4w9WgXcQ", caption: "aspetta la fine 💀" },
-    { id: "LXb3EKWsInQ", caption: "raga che bomba" },
-    { id: "kffacxfA7G4", caption: "🎧🔥" },
-    { id: "hT_nvWreIhg", caption: "in loop" },
-    { id: "wyx6JDQCslE", caption: "alle 3 di notte questa >>" },
-    { id: "OPf0YbXqDm0", caption: "tutorial?" },
-    { id: "JGwWNGJdvx8", caption: "vibe" },
-    { id: "9bZkp7q19f0", caption: "nostalgia" },
-    { id: "kJQP7kiw5Fk", caption: "estate 🌴" },
+    // Satisfying / Magic tricks
+    { id: "ldSVhw1Nv50", caption: "come ha fatto?? 😱" },        // Justin Flom dress transformation
+    { id: "qeGTXIFn3gQ", caption: "troppo carino 🥺" },          // Rose Makes Brownies
+    // Comedy / Pranks  
+    { id: "3Lb5_40Qakg", caption: "mamma vs papà 💀" },          // Dad vs Mom amusement park
+    { id: "jE9SMQuF-o8", caption: "i genitori be like" },        // Parents comedy
+    // Challenge / Sports
+    { id: "aU2KRF87RPc", caption: "trick shot assurdo" },        // Colin Amazing trick shots
+    { id: "Cx4LPYA0oMQ", caption: "parkour goals 🔥" },          // Spider-Man Parkour
+    // Family / Cute
+    { id: "_RgRvHwzE4I", caption: "auguri 🎂" },                 // Happy Birthday viral
+    { id: "BNof_SlHB88", caption: "ahahahah" },                  // Batman comedy
+    // Animals / Pets
+    { id: "ALZetvgszCo", caption: "che dolce 🥹" },              // Kind animal video
+    { id: "VL_Iv3ef-74", caption: "importante" },                // Save water cute
+    // Dance / Trend
+    { id: "OPf0YbXqDm0", caption: "questo ballo >>" },           
+    { id: "kJQP7kiw5Fk", caption: "in loop" },
+    // Food
+    { id: "ztwHL6JEE6M", caption: "che fame guardando" },        // Chinese burger
+    // Random viral
+    { id: "TtPcz3hZPCc", caption: "oddio 😂" },                  // Car race monster
   ], []);
 
   // Backward compatibility

@@ -53,10 +53,23 @@ function pick(arr) {
 }
 
 // Reel video component - thumbnail + play on click
-function ReelVideo({ youtubeId, onPlay, style }) {
+function ReelVideo({ youtubeId, onPlay, style, isActive, onActivate }) {
   const containerRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [wantsToPlay, setWantsToPlay] = useState(false);
   const hasTriggeredPlay = useRef(false);
+  const [iframeKey, setIframeKey] = useState(0);
+
+  // Determine if iframe should be shown
+  // Show iframe when: user clicked play AND (this video is active OR no video tracking yet)
+  const shouldShowIframe = wantsToPlay && (isActive !== false);
+
+  // Stop playing if another video becomes active
+  useEffect(() => {
+    if (isActive === false && wantsToPlay) {
+      setWantsToPlay(false);
+      setIframeKey(k => k + 1); // Force new iframe on next play
+    }
+  }, [isActive, wantsToPlay]);
 
   // Track when visible
   useEffect(() => {
@@ -82,7 +95,8 @@ function ReelVideo({ youtubeId, onPlay, style }) {
   }, [onPlay]);
 
   const handlePlay = () => {
-    setIsPlaying(true);
+    if (onActivate) onActivate(youtubeId);
+    setWantsToPlay(true);
   };
 
   // Thumbnail from YouTube
@@ -93,7 +107,7 @@ function ReelVideo({ youtubeId, onPlay, style }) {
 
   return (
     <div ref={containerRef} style={{ position: "relative", width: "100%", height: "100%", background: "#000", ...style }}>
-      {!isPlaying ? (
+      {!shouldShowIframe ? (
         <>
           {/* Thumbnail */}
           <img 
@@ -139,6 +153,7 @@ function ReelVideo({ youtubeId, onPlay, style }) {
         </>
       ) : (
         <iframe
+          key={`iframe-${youtubeId}-${iframeKey}`}
           src={embedUrl}
           style={{ width: "100%", height: "100%", border: "none" }}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -188,6 +203,7 @@ export default function ScrollTrap() {
   const [estimatedTime, setEstimatedTime] = useState(null);
   const [timeSpent, setTimeSpent] = useState(0);
   const [showPrivacyOnly, setShowPrivacyOnly] = useState(false);
+  const [activeVideoId, setActiveVideoId] = useState(null); // Track which video is playing
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const audioCtxRef = useRef(null);
@@ -1183,8 +1199,9 @@ export default function ScrollTrap() {
   if (gameState === "intro") {
     const nameOk = myHandle.length > 0;
     return (
-      <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at top, #111827 0%, #000 60%, #000 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif", color: "#fff" }} onMouseDown={unlockAudio} onTouchStart={unlockAudio}>
-        <div style={{ width: "100%", maxWidth: 560, textAlign: "center" }}>
+      <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse at top, #111827 0%, #000 60%, #000 100%)", overflowY: "auto", WebkitOverflowScrolling: "touch", fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif", color: "#fff" }} onMouseDown={unlockAudio} onTouchStart={unlockAudio}>
+        <div style={{ minHeight: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "40px 20px 60px" }}>
+          <div style={{ width: "100%", maxWidth: 560, textAlign: "center" }}>
           <div style={{ fontSize: 76, marginBottom: 12 }}>📱</div>
           <div style={{ fontWeight: 900, fontSize: 44, letterSpacing: -1.5, background: "linear-gradient(135deg, #ff3366 0%, #ff6b6b 35%, #feca57 70%, #48dbfb 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: 12 }}>SCROLL TRAP</div>
           <div style={{ color: "#cbd5e1", fontSize: 19, lineHeight: 1.4, marginBottom: 8, fontWeight: 600 }}>Un gioco per aiutarti a capire come funzionano i social</div>
@@ -1215,6 +1232,7 @@ export default function ScrollTrap() {
             <div style={{ color: "#4b5563", fontSize: 11, marginBottom: 6 }}>© Ernesto Belisario 2026</div>
             <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyOnly(true); }} style={{ color: "#6b7280", fontSize: 11, textDecoration: "underline", cursor: "pointer" }}>Privacy Policy</a>
           </div>
+        </div>
         </div>
       </div>
     );
@@ -1306,6 +1324,8 @@ export default function ScrollTrap() {
                 <div style={{ width: "100%", maxWidth: "calc(70vh * 9 / 16)", margin: "0 auto", aspectRatio: "9 / 16", maxHeight: "70vh", position: "relative", overflow: "hidden", background: "#000" }} onDoubleClick={() => handleLike(post)}>
                   <ReelVideo 
                     youtubeId={post.youtubeId} 
+                    isActive={activeVideoId === post.youtubeId}
+                    onActivate={(videoId) => setActiveVideoId(videoId)}
                     onPlay={() => {
                       setUserInterests((prev) => {
                         const cat = post.type === "reel" ? "music" : post.type;

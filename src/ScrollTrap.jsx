@@ -304,9 +304,12 @@ export default function ScrollTrap() {
 
   const [showComments, setShowComments] = useState(false);
   const [currentComments, setCurrentComments] = useState(null);
+  const [commentInputText, setCommentInputText] = useState("");
 
   const [showProfile, setShowProfile] = useState(false);
   const [currentProfile, setCurrentProfile] = useState(null);
+
+  const [dmInputText, setDmInputText] = useState("");
 
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [certificateImageUrl, setCertificateImageUrl] = useState(null);
@@ -1018,7 +1021,7 @@ export default function ScrollTrap() {
   }, []);
 
   const openDMInbox = useCallback(() => { playPop(); setShowDMInbox(true); setShowNotificationsInbox(false); }, [playPop]);
-  const openDM = useCallback((dm) => { playPop(); setCurrentDM(dm); setShowDM(true); setShowDMInbox(false); setShowNotificationsInbox(false); }, [playPop]);
+  const openDM = useCallback((dm) => { playPop(); setCurrentDM(dm); setShowDM(true); setShowDMInbox(false); setShowNotificationsInbox(false); setDmInputText(""); }, [playPop]);
   const openNotificationsInbox = useCallback(() => { playPop(); setShowNotificationsInbox(true); setShowDMInbox(false); }, [playPop]);
 
   const triggerFriendRequestModal = useCallback(() => {
@@ -1090,7 +1093,80 @@ export default function ScrollTrap() {
 
   const handleStoryClick = useCallback((story) => { setCurrentStory(story); setStoryProgress(0); setShowStory(true); playPop(); }, [playPop]);
   const handleStoryPoll = useCallback(() => { setStoriesPollClicks((x) => x + 1); setMood((m) => clamp(m + 2, 0, 100)); playPop(); }, [playPop]);
-  const handleDMReply = useCallback(() => { setDmReplies((x) => x + 1); setMood((m) => clamp(m + 5, 0, 100)); playPop(); }, [playPop]);
+  
+  // DM Reply - adds user message and generates auto-reply
+  const handleDMReply = useCallback(() => {
+    if (!dmInputText.trim() || !currentDM) return;
+    
+    const userMsg = { from: "me", text: dmInputText.trim(), time: "adesso" };
+    
+    // Add user message to current DM
+    setCurrentDM(dm => ({
+      ...dm,
+      messages: [...dm.messages, userMsg]
+    }));
+    
+    // Update dmInbox too
+    setDmInbox(inbox => inbox.map(dm => 
+      dm.id === currentDM.id 
+        ? { ...dm, messages: [...dm.messages, userMsg] }
+        : dm
+    ));
+    
+    setDmInputText("");
+    setDmReplies((x) => x + 1);
+    setMood((m) => clamp(m + 5, 0, 100));
+    playPop();
+    
+    // Auto-reply after delay
+    const autoReplies = [
+      "haha sì 😂", "troppo vero", "ma dai!", "omg", "ti giuro 💀", 
+      "aspetta ti mando una cosa", "raga ma", "nooo", "ok ok", "sisi",
+      "comunque", "vabbè dai", "ahaha esatto", "ma figurati", "seee"
+    ];
+    setTimeout(() => {
+      const reply = { from: "them", text: pick(autoReplies), time: "adesso" };
+      setCurrentDM(dm => dm ? { ...dm, messages: [...dm.messages, reply] } : dm);
+      setDmInbox(inbox => inbox.map(dm => 
+        dm.id === currentDM.id 
+          ? { ...dm, messages: [...dm.messages, reply] }
+          : dm
+      ));
+    }, 1500 + Math.random() * 2000);
+  }, [dmInputText, currentDM, playPop]);
+
+  // Comment - adds user comment
+  const handleAddComment = useCallback(() => {
+    if (!commentInputText.trim() || !currentComments) return;
+    
+    const userComment = { user: myHandle || "tu", text: commentInputText.trim(), avatar: 0, isMe: true };
+    
+    // Add to current comments
+    setCurrentComments(post => ({
+      ...post,
+      commentsList: [...(post.commentsList || []), userComment],
+      comments: (post.comments || 0) + 1
+    }));
+    
+    // Update in activePosts too
+    setActivePosts(posts => posts.map(p => 
+      p.id === currentComments.id 
+        ? { ...p, commentsList: [...(p.commentsList || []), userComment], comments: (p.comments || 0) + 1 }
+        : p
+    ));
+    
+    setCommentInputText("");
+    setMood((m) => clamp(m + 3, 0, 100));
+    playPop();
+    
+    // Sometimes get a like or reply on your comment
+    if (Math.random() > 0.5) {
+      setTimeout(() => {
+        const reactions = ["❤️ piace a " + pick(teenUsernames), "risposta: " + pick(["ahaha vero!", "esatto 💀", "siii", "ma no dai", "troppo"])];
+        // Could show a notification here
+      }, 2000 + Math.random() * 3000);
+    }
+  }, [commentInputText, currentComments, myHandle, teenUsernames, playPop]);
 
   const endGame = useCallback(() => {
     if (estimatedTime && timeSpent <= estimatedTime) setExitedOnTime(true);
@@ -1495,8 +1571,15 @@ export default function ScrollTrap() {
               <div style={{ display: "flex", justifyContent: "flex-start" }}><div style={{ background: "#1c1c1e", padding: "10px 12px", borderRadius: 18, color: "#6b7280" }}>Sta scrivendo…</div></div>
             </div>
             <div style={{ padding: 14, borderTop: "1px solid #1c1c1e", display: "flex", gap: 10 }}>
-              <input type="text" placeholder="Messaggio…" style={{ flex: 1, padding: "12px 14px", borderRadius: 999, border: "1px solid #333", background: "#111", color: "#fff", outline: "none" }} />
-              <button onClick={handleDMReply} style={{ padding: "12px 16px", borderRadius: 999, border: "none", background: "linear-gradient(135deg,#667eea,#764ba2)", color: "#fff", fontWeight: 1000, cursor: "pointer" }}>Invia</button>
+              <input 
+                type="text" 
+                placeholder="Messaggio…" 
+                value={dmInputText}
+                onChange={(e) => setDmInputText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleDMReply()}
+                style={{ flex: 1, padding: "12px 14px", borderRadius: 999, border: "1px solid #333", background: "#111", color: "#fff", outline: "none" }} 
+              />
+              <button onClick={handleDMReply} disabled={!dmInputText.trim()} style={{ padding: "12px 16px", borderRadius: 999, border: "none", background: dmInputText.trim() ? "linear-gradient(135deg,#667eea,#764ba2)" : "#333", color: "#fff", fontWeight: 1000, cursor: dmInputText.trim() ? "pointer" : "not-allowed", opacity: dmInputText.trim() ? 1 : 0.5 }}>Invia</button>
             </div>
           </div>
         )}
@@ -1547,15 +1630,27 @@ export default function ScrollTrap() {
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: "62vh", background: "#0a0a0a", borderRadius: "18px 18px 0 0", zIndex: 145, display: "flex", flexDirection: "column", borderTop: "1px solid #1c1c1e" }}>
             <div style={{ padding: 14, borderBottom: "1px solid #1c1c1e", display: "flex", alignItems: "center" }}>
               <div style={{ flex: 1, textAlign: "center", fontWeight: 1000 }}>Commenti</div>
-              <button onClick={() => setShowComments(false)} style={{ background: "transparent", border: "none", color: "#6b7280", fontSize: 22, cursor: "pointer" }}>✕</button>
+              <button onClick={() => { setShowComments(false); setCommentInputText(""); }} style={{ background: "transparent", border: "none", color: "#6b7280", fontSize: 22, cursor: "pointer" }}>✕</button>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: 14 }}>
               {(currentComments.commentsList || []).map((c, i) => (
                 <div key={i} style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#1c1c1e", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🙂</div>
-                  <div style={{ flex: 1 }}><div style={{ fontSize: 13, lineHeight: 1.4 }}><span style={{ fontWeight: 1000 }}>{c.user}</span> <span style={{ color: "#d1d5db" }}>{c.text}</span></div><div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>2h • ❤️ {Math.floor(Math.random() * 80)}</div></div>
+                  <div style={{ width: 34, height: 34, borderRadius: "50%", background: c.isMe ? "linear-gradient(135deg,#667eea,#764ba2)" : "#1c1c1e", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{c.isMe ? "👤" : "🙂"}</div>
+                  <div style={{ flex: 1 }}><div style={{ fontSize: 13, lineHeight: 1.4 }}><span style={{ fontWeight: 1000, color: c.isMe ? "#a78bfa" : "#fff" }}>{c.user}</span> <span style={{ color: "#d1d5db" }}>{c.text}</span></div><div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>{c.isMe ? "adesso" : "2h"} • ❤️ {c.isMe ? 0 : Math.floor(Math.random() * 80)}</div></div>
                 </div>
               ))}
+            </div>
+            <div style={{ padding: 14, borderTop: "1px solid #1c1c1e", display: "flex", gap: 10, alignItems: "center" }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#667eea,#764ba2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>👤</div>
+              <input 
+                type="text" 
+                placeholder="Aggiungi un commento…" 
+                value={commentInputText}
+                onChange={(e) => setCommentInputText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+                style={{ flex: 1, padding: "10px 14px", borderRadius: 999, border: "1px solid #333", background: "#111", color: "#fff", outline: "none", fontSize: 14 }} 
+              />
+              <button onClick={handleAddComment} disabled={!commentInputText.trim()} style={{ background: "transparent", border: "none", color: commentInputText.trim() ? "#0095f6" : "#333", fontWeight: 900, cursor: commentInputText.trim() ? "pointer" : "not-allowed", fontSize: 14 }}>Pubblica</button>
             </div>
           </div>
         )}

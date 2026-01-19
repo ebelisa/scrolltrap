@@ -311,6 +311,15 @@ export default function ScrollTrap() {
 
   const [dmInputText, setDmInputText] = useState("");
 
+  // === RETENTION TECHNIQUES STATES ===
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [exitModalContent, setExitModalContent] = useState(null);
+  const [liveViewers, setLiveViewers] = useState(Math.floor(Math.random() * 200) + 50);
+  const [liveLikeAnimations, setLiveLikeAnimations] = useState([]); // Like che appaiono in tempo reale
+  const [showAlgoReason, setShowAlgoReason] = useState(null); // "Consigliato perché..."
+  const [urgentStory, setUrgentStory] = useState(null); // Storia in scadenza
+  const [friendsWatching, setFriendsWatching] = useState([]); // "3 amici stanno guardando"
+
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [certificateImageUrl, setCertificateImageUrl] = useState(null);
 
@@ -639,16 +648,27 @@ export default function ScrollTrap() {
   }, []);
 
   const notificationTypes = useMemo(() => [
+    // High dopamine - content that exists
     { text: `❤️ A @sofi_roma piace il post di @${myHandle}`, hasContent: true, mood: 8 },
     { text: `💬 @nico.mp4 ti ha scritto: "Top!"`, hasContent: true, mood: 10, action: "dm" },
     { text: `👤 @giada_03 vuole seguire @${myHandle}`, hasContent: true, mood: 2, action: "friendRequest" },
+    { text: `📩 Nuovo messaggio in richieste`, hasContent: true, mood: 4, action: "dm" },
+    { text: `🎉 +${Math.floor(Math.random() * 8) + 2} nuovi follower oggi!`, hasContent: true, mood: 12 },
+    { text: `💕 La tua crush ha visto la tua storia`, hasContent: true, mood: 15 },
+    // Variable reward - creates curiosity but often empty
     { text: `🔔 Nuove notifiche per @${myHandle}`, hasContent: false, mood: -6 },
     { text: `📸 @giu.rossi ti ha taggato`, hasContent: false, mood: -3 },
     { text: `👀 Qualcuno ha visitato il profilo di @${myHandle}`, hasContent: false, mood: -8 },
     { text: `🔥 Il post di @${myHandle} sta andando bene`, hasContent: false, mood: -2 },
-    { text: `📩 Nuovo messaggio in richieste`, hasContent: true, mood: 4, action: "dm" },
+    { text: `👀 Qualcuno ha fatto uno screenshot...`, hasContent: false, mood: -10 },
+    { text: `💭 Qualcuno ti ha menzionato in una storia`, hasContent: false, mood: -5 },
+    { text: `🔔 Aggiornamento dal tuo account preferito`, hasContent: false, mood: -4 },
+    { text: `📱 Hai perso 3 storie oggi`, hasContent: false, mood: -7 },
+    // Rare high-impact notifications
     { text: `📸 Qualcuno ha fatto screenshot della tua storia`, hasContent: false, mood: -12, rare: true },
     { text: `🔥 VIRALE: il tuo post ha 10.000+ visualizzazioni!`, hasContent: false, mood: 15, rare: true },
+    { text: `💔 La tua crush ha smesso di seguirti`, hasContent: false, mood: -20, rare: true },
+    { text: `🎉 Sei tra i profili consigliati questa settimana!`, hasContent: false, mood: 18, rare: true },
   ], [myHandle]);
 
   const typingUsers = useMemo(() => [
@@ -776,6 +796,14 @@ export default function ScrollTrap() {
     setStoryList(initialStories);
     setTypingShownCount(0);
     setPostCounter(1000);
+    // Reset retention technique states
+    setShowExitModal(false);
+    setExitModalContent(null);
+    setLiveViewers(Math.floor(Math.random() * 200) + 50);
+    setLiveLikeAnimations([]);
+    setShowAlgoReason(null);
+    setUrgentStory(null);
+    setFriendsWatching([]);
   }, [gameState, initialPosts, baseDMs, initialStories]);
 
   useEffect(() => {
@@ -913,6 +941,100 @@ export default function ScrollTrap() {
     return () => clearInterval(interval);
   }, [showStory, currentStory]);
 
+  // === RETENTION TECHNIQUES EFFECTS ===
+  
+  // 1. Live viewers counter - fluttua per creare urgenza
+  useEffect(() => {
+    if (gameState !== "playing") return;
+    const timer = setInterval(() => {
+      setLiveViewers(v => {
+        const change = Math.floor(Math.random() * 30) - 10; // -10 to +20
+        return Math.max(20, Math.min(500, v + change));
+      });
+    }, 3000 + Math.random() * 2000);
+    return () => clearInterval(timer);
+  }, [gameState]);
+
+  // 2. Live like animations - like che appaiono sui post mentre scrolli
+  useEffect(() => {
+    if (gameState !== "playing") return;
+    const timer = setInterval(() => {
+      if (activePosts.length > 0 && Math.random() > 0.5) {
+        const randomPost = pick(activePosts);
+        const likeAnim = {
+          id: Date.now(),
+          postId: randomPost.id,
+          user: pick(teenUsernames),
+        };
+        setLiveLikeAnimations(prev => [...prev, likeAnim]);
+        // Update post likes
+        setActivePosts(posts => posts.map(p => 
+          p.id === randomPost.id ? { ...p, likes: p.likes + 1 } : p
+        ));
+        // Remove animation after delay
+        setTimeout(() => {
+          setLiveLikeAnimations(prev => prev.filter(a => a.id !== likeAnim.id));
+        }, 2000);
+      }
+    }, 4000 + Math.random() * 3000);
+    return () => clearInterval(timer);
+  }, [gameState, activePosts, teenUsernames]);
+
+  // 3. "Amici stanno guardando" - FOMO sociale
+  useEffect(() => {
+    if (gameState !== "playing") return;
+    const friendNames = ["marco", "giulia", "ale", "fra", "nico", "emma", "leo", "sara"];
+    const timer = setInterval(() => {
+      if (Math.random() > 0.6) {
+        const numFriends = Math.floor(Math.random() * 3) + 1;
+        const watching = [];
+        for (let i = 0; i < numFriends; i++) {
+          watching.push(pick(friendNames));
+        }
+        setFriendsWatching([...new Set(watching)]);
+        setTimeout(() => setFriendsWatching([]), 8000);
+      }
+    }, 15000 + Math.random() * 10000);
+    return () => clearInterval(timer);
+  }, [gameState]);
+
+  // 4. Storia in scadenza - urgenza temporale
+  useEffect(() => {
+    if (gameState !== "playing") return;
+    const timer = setTimeout(() => {
+      const unseenStories = storyList.filter(s => !s.seen);
+      if (unseenStories.length > 0) {
+        const story = pick(unseenStories);
+        setUrgentStory({
+          ...story,
+          expiresIn: Math.floor(Math.random() * 5) + 1 // 1-5 minuti
+        });
+        setTimeout(() => setUrgentStory(null), 12000);
+      }
+    }, 25000 + Math.random() * 15000);
+    return () => clearTimeout(timer);
+  }, [gameState, storyList]);
+
+  // 5. "Consigliato perché..." - mostra che l'algoritmo ti conosce
+  useEffect(() => {
+    if (gameState !== "playing") return;
+    const reasons = [
+      "Consigliato perché hai guardato contenuti simili",
+      "Popolare tra chi ti segue",
+      "Basato sui tuoi interessi",
+      "Perché segui account simili",
+      "I tuoi amici hanno interagito",
+      "Contenuto di tendenza nella tua zona",
+    ];
+    const timer = setInterval(() => {
+      if (Math.random() > 0.7) {
+        setShowAlgoReason(pick(reasons));
+        setTimeout(() => setShowAlgoReason(null), 5000);
+      }
+    }, 20000 + Math.random() * 15000);
+    return () => clearInterval(timer);
+  }, [gameState]);
+
   // ==================== HANDLERS ====================
   const weightedCategoryPick = useCallback((weights) => {
     const entries = Object.entries(weights);
@@ -950,8 +1072,16 @@ export default function ScrollTrap() {
               batch.push(newReel);
             } else {
               // Generate regular post with coherent photo + caption
-              const isFomo = !isAd && Math.random() > 0.72;
+              const isFomo = !isAd && Math.random() > 0.65; // Increased FOMO frequency
               const isClickbait = !isAd && cat === "memes" && Math.random() > 0.75;
+              const fomoMessages = [
+                `${Math.floor(Math.random() * 30) + 10} tuoi amici hanno interagito`,
+                `${Math.floor(Math.random() * 50) + 20} stanno visualizzando ora`,
+                `Di tendenza tra chi segui`,
+                `Popolare nella tua zona`,
+                `${Math.floor(Math.random() * 15) + 3} amici hanno commentato`,
+                `Post virale 🔥`,
+              ];
               const newPost = buildPost({
                 id: postId,
                 user: isAd ? "SPONSORED" : pick(teenUsernames),
@@ -960,7 +1090,7 @@ export default function ScrollTrap() {
                 isAd,
                 postType: isAd ? "ad" : isClickbait ? "clickbait" : isFomo ? "fomo" : "normal",
                 isFake: isClickbait,
-                fomoText: isFomo ? `${Math.floor(Math.random() * 30) + 10} tuoi amici hanno interagito` : null,
+                fomoText: isFomo ? pick(fomoMessages) : null,
               });
               batch.push(newPost);
             }
@@ -1457,7 +1587,12 @@ export default function ScrollTrap() {
                     <div style={{ flex: 1 }} />
                     <button onClick={() => handlePostAction(post, "save")} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}><span style={{ fontSize: 26, color: savedPosts.includes(post.id) ? "#feca57" : "#fff" }}>{savedPosts.includes(post.id) ? "🔖" : "📑"}</span></button>
                   </div>
-                  <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 8 }}>{post.likes + (likedPosts.includes(post.id) ? 1 : 0)} Mi piace</div>
+                  <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                    {post.likes + (likedPosts.includes(post.id) ? 1 : 0)} Mi piace
+                    {liveLikeAnimations.some(a => a.postId === post.id) && (
+                      <span style={{ fontSize: 12, color: "#ed4956", animation: "pulse 0.5s ease" }}>+1 ❤️</span>
+                    )}
+                  </div>
                   <div style={{ fontSize: 14, lineHeight: 1.5, marginBottom: 8 }}><span style={{ fontWeight: 900 }}>{post.user}</span> {post.content}</div>
                   <button onClick={() => handlePostAction(post, "comment")} style={{ background: "transparent", border: "none", color: "#6b7280", cursor: "pointer", padding: 0, marginBottom: 14, fontSize: 14 }}>Vedi tutti i {post.comments} commenti</button>
                 </div>
@@ -1479,7 +1614,19 @@ export default function ScrollTrap() {
         </div>
 
         {/* EXIT BUTTON */}
-        <button onClick={endGame} style={{ position: "fixed", bottom: 92, right: 16, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 999, padding: "10px 16px", color: "#9ca3af", fontSize: 12, cursor: "pointer", zIndex: 65, backdropFilter: "blur(10px)", fontWeight: 900 }}>ESCI</button>
+        <button onClick={() => {
+          // Exit friction - mostra contenuto allettante prima di uscire
+          const exitContents = [
+            { type: "dm", text: `${pick(teenUsernames)} ti ha appena scritto...`, icon: "💬" },
+            { type: "like", text: `+${Math.floor(Math.random() * 5) + 2} nuovi like sul tuo commento`, icon: "❤️" },
+            { type: "story", text: `${pick(teenUsernames)} ha appena pubblicato una storia`, icon: "📷" },
+            { type: "post", text: "Un post sta diventando virale proprio ora", icon: "🔥" },
+            { type: "friend", text: `${pick(teenUsernames)} ha iniziato a seguirti`, icon: "👤" },
+            { type: "mention", text: `Sei stato menzionato in un commento`, icon: "💬" },
+          ];
+          setExitModalContent(pick(exitContents));
+          setShowExitModal(true);
+        }} style={{ position: "fixed", bottom: 92, right: 16, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 999, padding: "10px 16px", color: "#9ca3af", fontSize: 12, cursor: "pointer", zIndex: 65, backdropFilter: "blur(10px)", fontWeight: 900 }}>ESCI</button>
 
         {/* TIME HUD - Rimosso per non alterare la simulazione */}
 
@@ -1654,6 +1801,70 @@ export default function ScrollTrap() {
             </div>
           </div>
         )}
+
+        {/* EXIT FRICTION MODAL */}
+        {showExitModal && exitModalContent && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <div style={{ background: "#1c1c1e", borderRadius: 20, padding: 24, maxWidth: 340, width: "100%", textAlign: "center" }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>{exitModalContent.icon}</div>
+              <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 8 }}>Aspetta!</div>
+              <div style={{ color: "#d1d5db", fontSize: 14, marginBottom: 20, lineHeight: 1.5 }}>{exitModalContent.text}</div>
+              <div style={{ display: "flex", gap: 12, flexDirection: "column" }}>
+                <button onClick={() => { setShowExitModal(false); setExitModalContent(null); }} style={{ padding: "14px 20px", borderRadius: 12, border: "none", background: "linear-gradient(135deg,#667eea,#764ba2)", color: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15 }}>Resta ancora un po'</button>
+                <button onClick={() => { setShowExitModal(false); endGame(); }} style={{ padding: "14px 20px", borderRadius: 12, border: "1px solid #333", background: "transparent", color: "#6b7280", fontWeight: 700, cursor: "pointer", fontSize: 14 }}>Esci comunque</button>
+              </div>
+              <div style={{ marginTop: 16, fontSize: 11, color: "#4b5563" }}>Hai {Math.floor(Math.random() * 5) + 2} notifiche non lette</div>
+            </div>
+          </div>
+        )}
+
+        {/* LIVE VIEWERS BADGE */}
+        <div style={{ position: "fixed", top: 70, left: 12, background: "rgba(255,0,0,0.15)", border: "1px solid rgba(255,0,0,0.3)", borderRadius: 20, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6, zIndex: 60 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ff3b30", animation: "pulse 1.5s infinite" }} />
+          <span style={{ fontSize: 11, color: "#ff6b6b", fontWeight: 700 }}>{liveViewers} online</span>
+        </div>
+
+        {/* FRIENDS WATCHING POPUP */}
+        {friendsWatching.length > 0 && (
+          <div style={{ position: "fixed", top: 70, right: 12, background: "rgba(0,0,0,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "10px 14px", zIndex: 60, maxWidth: 200, animation: "slideIn 0.3s ease" }}>
+            <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 4 }}>👀 Stanno guardando</div>
+            <div style={{ fontSize: 13, color: "#fff", fontWeight: 700 }}>{friendsWatching.join(", ")}</div>
+          </div>
+        )}
+
+        {/* URGENT STORY POPUP */}
+        {urgentStory && (
+          <div onClick={() => { handleStoryClick(urgentStory); setUrgentStory(null); }} style={{ position: "fixed", bottom: 140, left: 12, right: 12, background: "linear-gradient(135deg, rgba(255,107,107,0.95), rgba(255,159,67,0.95))", borderRadius: 16, padding: "14px 16px", zIndex: 75, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 8px 32px rgba(255,107,107,0.4)" }}>
+            <div style={{ position: "relative" }}>
+              <SafeImg src={urgentStory.avatar} alt="" style={{ width: 44, height: 44, borderRadius: "50%", border: "2px solid #fff", objectFit: "cover" }} getAltSrc={altSrcFromCategory("friends", 150)} />
+              <div style={{ position: "absolute", top: -4, right: -4, background: "#ff3b30", borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10 }}>🔥</div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 900, fontSize: 14, color: "#fff" }}>Storia in scadenza!</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)" }}>{urgentStory.user} • Scade tra {urgentStory.expiresIn} min</div>
+            </div>
+            <div style={{ fontSize: 22 }}>→</div>
+          </div>
+        )}
+
+        {/* ALGORITHM REASON POPUP */}
+        {showAlgoReason && (
+          <div style={{ position: "fixed", bottom: 140, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "8px 16px", zIndex: 70, whiteSpace: "nowrap" }}>
+            <span style={{ fontSize: 12, color: "#9ca3af" }}>🎯 {showAlgoReason}</span>
+          </div>
+        )}
+
+        {/* CSS ANIMATIONS */}
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+          @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+        `}</style>
       </div>
     );
   }
